@@ -8,3 +8,4 @@ torch
 torchvision
 facenet-pytorch
 pillow
+scikit-learn
