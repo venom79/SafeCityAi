@@ -1,0 +1,2 @@
+RUN : python -m uvicorn modelService.app:app --reload --port 8001
+DB_BUILD : python -m modelService.scripts.db_builder.py

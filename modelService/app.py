@@ -1,4 +1,4 @@
-from recognizer.engine import FaceRecognitionEngine
+from modelService.recognizer.engine import FaceRecognitionEngine
 import cv2
 import numpy as np
 from fastapi import FastAPI

@@ -1,3 +1,4 @@
 modelService/__pycache__
 modelService/*/__pycache__
 modelService/venv
+modelService/dataset
