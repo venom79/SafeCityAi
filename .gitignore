@@ -1,4 +1,11 @@
+# modelService
 modelService/__pycache__
 modelService/*/__pycache__
 modelService/venv
 modelService/dataset
+
+
+# backend
+backend/node_modules
+backend/generated/prisma
+backend/.env
