@@ -10,7 +10,7 @@ import { ROLES } from "../constants/roles.js";
 const requireOwnership = ({ model, param, ownerField }) => {
   return async (req, res, next) => {
     try {
-      // Admins bypass ownership checks
+      // Admins bypass ownership checks 
       if (
         req.user.role === ROLES.ADMIN ||
         req.user.role === ROLES.SUPER_ADMIN
