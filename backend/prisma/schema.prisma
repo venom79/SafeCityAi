@@ -61,6 +61,7 @@ model case_person {
   case_person_photos   case_person_photos[]
   cctv_logs            cctv_logs[]
   face_embeddings      face_embeddings[]
+  sketch_searches      sketch_searches[]
 
   @@index([case_id], map: "idx_case_person_case")
   @@index([category], map: "idx_case_person_category")
@@ -68,25 +69,28 @@ model case_person {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model case_person_photos {
-  id                                          String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  case_person_id                              String            @db.Uuid
-  uploaded_by                                 String?           @db.Uuid
-  source                                      photo_source
-  file_path                                   String
-  file_hash                                   String?           @unique
-  status                                      photo_status      @default(UPLOADED)
-  is_primary                                  Boolean?          @default(false)
-  face_detected                               Boolean?          @default(false)
-  face_quality_score                          Float?            @db.Real
-  embedding_generated                         Boolean?          @default(false)
-  approved_by                                 String?           @db.Uuid
-  approved_at                                 DateTime?         @db.Timestamptz(6)
-  created_at                                  DateTime?         @default(now()) @db.Timestamptz(6)
-  updated_at                                  DateTime?         @default(now()) @db.Timestamptz(6)
-  users_case_person_photos_approved_byTousers users?            @relation("case_person_photos_approved_byTousers", fields: [approved_by], references: [id], onUpdate: NoAction)
-  case_person                                 case_person       @relation(fields: [case_person_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users_case_person_photos_uploaded_byTousers users?            @relation("case_person_photos_uploaded_byTousers", fields: [uploaded_by], references: [id], onUpdate: NoAction)
-  face_embeddings                             face_embeddings[]
+  id                                                                     String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  case_person_id                                                         String            @db.Uuid
+  uploaded_by                                                            String?           @db.Uuid
+  source                                                                 photo_source
+  file_path                                                              String
+  file_hash                                                              String?           @unique
+  status                                                                 photo_status      @default(UPLOADED)
+  is_primary                                                             Boolean?          @default(false)
+  face_detected                                                          Boolean?          @default(false)
+  face_quality_score                                                     Float?            @db.Real
+  embedding_generated                                                    Boolean?          @default(false)
+  approved_by                                                            String?           @db.Uuid
+  approved_at                                                            DateTime?         @db.Timestamptz(6)
+  created_at                                                             DateTime?         @default(now()) @db.Timestamptz(6)
+  updated_at                                                             DateTime?         @default(now()) @db.Timestamptz(6)
+  image_type                                                             image_type        @default(PHOTO)
+  users_case_person_photos_approved_byTousers                            users?            @relation("case_person_photos_approved_byTousers", fields: [approved_by], references: [id], onUpdate: NoAction)
+  case_person                                                            case_person       @relation(fields: [case_person_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_case_person_photos_uploaded_byTousers                            users?            @relation("case_person_photos_uploaded_byTousers", fields: [uploaded_by], references: [id], onUpdate: NoAction)
+  face_embeddings                                                        face_embeddings[]
+  sketch_searches_sketch_searches_candidate_photo_idTocase_person_photos sketch_searches[] @relation("sketch_searches_candidate_photo_idTocase_person_photos")
+  sketch_searches_sketch_searches_sketch_photo_idTocase_person_photos    sketch_searches[] @relation("sketch_searches_sketch_photo_idTocase_person_photos")
 
   @@index([embedding_generated], map: "idx_case_person_photos_embedding")
   @@index([case_person_id], map: "idx_case_person_photos_person")
@@ -94,24 +98,26 @@ model case_person_photos {
 }
 
 model cases {
-  id                                String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  case_number                       String        @unique
+  id                                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  case_number                       String            @unique
   case_type                         case_type
-  status                            case_status   @default(SUBMITTED)
+  status                            case_status       @default(SUBMITTED)
   title                             String
   description                       String?
-  created_by                        String        @db.Uuid
-  assigned_admin                    String?       @db.Uuid
-  assigned_at                       DateTime?     @db.Timestamptz(6)
+  created_by                        String            @db.Uuid
+  assigned_admin                    String?           @db.Uuid
+  assigned_at                       DateTime?         @db.Timestamptz(6)
   last_seen_location                String?
-  last_seen_time                    DateTime?     @db.Timestamptz(6)
-  is_active                         Boolean       @default(true)
-  created_at                        DateTime?     @default(now()) @db.Timestamptz(6)
-  updated_at                        DateTime?     @default(now()) @db.Timestamptz(6)
+  last_seen_time                    DateTime?         @db.Timestamptz(6)
+  is_active                         Boolean           @default(true)
+  created_at                        DateTime?         @default(now()) @db.Timestamptz(6)
+  updated_at                        DateTime?         @default(now()) @db.Timestamptz(6)
+  rejection_reason                  String?
   alerts                            alerts[]
   case_person                       case_person[]
-  users_cases_assigned_adminTousers users?        @relation("cases_assigned_adminTousers", fields: [assigned_admin], references: [id], onUpdate: NoAction)
-  users_cases_created_byTousers     users         @relation("cases_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  users_cases_assigned_adminTousers users?            @relation("cases_assigned_adminTousers", fields: [assigned_admin], references: [id], onUpdate: NoAction)
+  users_cases_created_byTousers     users             @relation("cases_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  sketch_searches                   sketch_searches[]
 
   @@index([assigned_admin], map: "idx_cases_assigned_admin")
   @@index([created_by], map: "idx_cases_created_by")
@@ -209,6 +215,7 @@ model users {
   cctv_cameras                                             cctv_cameras[]
   cctv_logs                                                cctv_logs[]
   refresh_tokens                                           refresh_tokens[]
+  sketch_searches                                          sketch_searches[]
 
   @@index([email], map: "idx_users_email")
   @@index([role], map: "idx_users_role")
@@ -225,6 +232,31 @@ model refresh_tokens {
 
   @@index([token_hash], map: "idx_refresh_tokens_token_hash")
   @@index([user_id], map: "idx_refresh_tokens_user_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sketch_searches {
+  id                                                                        String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sketch_photo_id                                                           String             @db.Uuid
+  candidate_person_id                                                       String             @db.Uuid
+  candidate_photo_id                                                        String             @db.Uuid
+  similarity_score                                                          Float              @db.Real
+  decision                                                                  detection_status
+  performed_by                                                              String             @db.Uuid
+  case_id                                                                   String             @db.Uuid
+  model_name                                                                String
+  model_version                                                             String
+  created_at                                                                DateTime?          @default(now()) @db.Timestamptz(6)
+  case_person                                                               case_person        @relation(fields: [candidate_person_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_candidate_person")
+  case_person_photos_sketch_searches_candidate_photo_idTocase_person_photos case_person_photos @relation("sketch_searches_candidate_photo_idTocase_person_photos", fields: [candidate_photo_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_candidate_photo")
+  case_person_photos_sketch_searches_sketch_photo_idTocase_person_photos    case_person_photos @relation("sketch_searches_sketch_photo_idTocase_person_photos", fields: [sketch_photo_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sketch_photo")
+  cases                                                                     cases              @relation(fields: [case_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sketch_search_case")
+  users                                                                     users              @relation(fields: [performed_by], references: [id], onUpdate: NoAction, map: "fk_sketch_search_user")
+
+  @@index([case_id], map: "idx_sketch_searches_case")
+  @@index([decision], map: "idx_sketch_searches_decision")
+  @@index([sketch_photo_id], map: "idx_sketch_searches_sketch")
+  @@index([created_at(sort: Desc)], map: "idx_sketch_searches_time")
 }
 
 enum alert_status {
@@ -311,4 +343,14 @@ enum user_role {
   USER
   ADMIN
   SUPER_ADMIN
+}
+
+enum image_type {
+  PHOTO
+  SKETCH
+}
+
+enum person_type {
+  MISSING
+  WANTED
 }

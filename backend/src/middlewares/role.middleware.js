@@ -1,5 +1,3 @@
-import { ROLES } from "../constants/roles.js";
-
 const requireRole = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !req.user.role) {
