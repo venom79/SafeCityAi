@@ -41,7 +41,7 @@ export const registerCase = async (req, res) => {
       status: CASE_STATUS.SUBMITTED,
     };
 
-    // ADMIN self-assign logic (explicit + safe)
+    // ADMIN self-assign logic 
     if (req.user.role === ROLES.ADMIN && assignToSelf === true) {
       data.status = CASE_STATUS.UNDER_REVIEW;
       data.assigned_admin = req.user.id;
@@ -268,7 +268,7 @@ export const assignCase = async (req, res) => {
             })
         }
 
-        const updatedCase = await prisma.cases.update({
+        await prisma.cases.update({
             where:{
                 id: req.case.id
             },
@@ -292,3 +292,131 @@ export const assignCase = async (req, res) => {
         });
     }
 }
+
+export const addCasePerson = async (req, res) => {
+  try {
+    const {
+      full_name,
+      alias,
+      gender,
+      age,
+      height_cm,
+      weight_kg,
+      skin_tone,
+      eye_color,
+      hair_color,
+      last_known_clothing,
+      distinguishing_marks,
+      description,
+      category,
+      is_primary,
+    } = req.body;
+
+    // Validate category
+    if (!Object.values(CASE_TYPE).includes(category)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid person category",
+      });
+    }
+
+    // Category must match case type
+    if (category !== req.case.case_type) {
+      return res.status(400).json({
+        success: false,
+        message: "Person category must match case type",
+      });
+    }
+
+    // Check if primary already exists for this case
+    const existingPrimary = await prisma.case_person.findFirst({
+      where: {
+        case_id: req.case.id,
+        is_primary: true,
+      },
+    });
+
+    let finalIsPrimary = Boolean(is_primary);
+
+    // If client tries to set primary but one already exists → reject
+    if (finalIsPrimary && existingPrimary) {
+      return res.status(409).json({
+        success: false,
+        message: "Primary person already exists for this case",
+      });
+    }
+
+    // If no primary exists yet → auto-assign
+    if (!existingPrimary) {
+      finalIsPrimary = true;
+    }
+
+    // 4️⃣ Create case person (backend enforces case_id)
+    const person = await prisma.case_person.create({
+      data: {
+        case_id: req.case.id,
+        category,
+        full_name,
+        alias,
+        gender,
+        age,
+        height_cm,
+        weight_kg,
+        skin_tone,
+        eye_color,
+        hair_color,
+        last_known_clothing,
+        distinguishing_marks,
+        description,
+        is_primary: finalIsPrimary,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        id: person.id,
+        is_primary: person.is_primary,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const getCasePersons = async (req, res) => {
+  try {
+    const casePersons = await prisma.case_person.findMany({
+      where: {
+        case_id: req.case.id,
+      },
+      select: {
+        id: true,
+        full_name: true,
+        category: true,
+        gender: true,
+        age: true,
+        is_primary: true,
+      },
+      orderBy: [
+        { is_primary: "desc" },
+        { created_at: "asc" },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: casePersons,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};

@@ -9,3 +9,6 @@ modelService/dataset
 backend/node_modules
 backend/generated/prisma
 backend/.env
+
+# frontend
+frontend/node_modules
