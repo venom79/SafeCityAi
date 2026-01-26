@@ -1,9 +1,7 @@
-import React from 'react'
+import RegisterCase from "./RegisterCase"
 
 const Home = () => {
-  return (
-    <div>Home</div>
-  )
+  return <RegisterCase />
 }
 
 export default Home
