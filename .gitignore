@@ -9,6 +9,7 @@ modelService/dataset
 backend/node_modules
 backend/generated/prisma
 backend/.env
+backend/uploads
 
 # frontend
 frontend/node_modules

@@ -292,6 +292,7 @@ enum case_status {
   REJECTED
   WITHDRAWN
   CLOSED
+  WITHDRAW_REQUESTED
 }
 
 enum case_type {
