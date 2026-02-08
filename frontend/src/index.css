@@ -1,4 +1,10 @@
+@import "tailwindcss";
 
+
+
+
+
+/* 
 @import "tw-animate-css";
 
 @plugin "tailwindcss-animate";
@@ -126,4 +132,4 @@
   body {
     @apply bg-background text-foreground;
   }
-}
+} */
