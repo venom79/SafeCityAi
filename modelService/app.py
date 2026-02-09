@@ -1,15 +1,22 @@
-from modelService.recognizer.engine import FaceRecognitionEngine
+from recognizer.engine import FaceRecognitionEngine
+from recognizer.embedding_generator import EmbeddingGenerator
+
 import cv2
-import numpy as np
-from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import List, Optional
 import time
+import base64
+import io
+from enum import Enum
+from typing import List, Optional
+
+import numpy as np
+from PIL import Image
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 app = FastAPI(
     title="SafeCity AI – Model Service",
     version="1.0.0",
-    description="Face detection and recognition service"
+    description="Face detection, recognition, and embedding service"
 )
 
 # ─────────────────────────────
@@ -50,12 +57,35 @@ class ImageIdentifyResponse(BaseModel):
 
 
 # ─────────────────────────────
+# Embedding schemas
+# ─────────────────────────────
+class ImageType(str, Enum):
+    PHOTO = "PHOTO"
+    SKETCH = "SKETCH"
+
+
+class EmbeddingRequest(BaseModel):
+    image_base64: str
+    image_type: ImageType
+
+
+class EmbeddingResponse(BaseModel):
+    embedding: List[float]
+    model_name: str
+    model_version: str
+
+
+# ─────────────────────────────
 # Startup hook 
 # ─────────────────────────────
 @app.on_event("startup")
 def startup_event():
     print("[STARTUP] Loading recognition engine...")
     app.state.engine = FaceRecognitionEngine()
+
+    print("[STARTUP] Loading embedding generator...")
+    app.state.embedding_generator = EmbeddingGenerator()
+
     app.state.model_loaded = True
 
 # ─────────────────────────────
@@ -92,3 +122,40 @@ def identify_image(payload: ImageIdentifyRequest):
         frame_id=payload.frame_id,
         detections=detections
     )
+
+
+# ─────────────────────────────
+# Embedding endpoint (PHOTO / SKETCH)
+# ─────────────────────────────
+@app.post("/embedding", response_model=EmbeddingResponse)
+def generate_embedding(payload: EmbeddingRequest):
+
+    generator: EmbeddingGenerator = app.state.embedding_generator
+
+    # Decode base64 image
+    try:
+        image_bytes = base64.b64decode(payload.image_base64)
+        image = Image.open(io.BytesIO(image_bytes))
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid image_base64"
+        )
+
+    # Generate embedding
+    if payload.image_type == ImageType.PHOTO:
+        embedding = generator.photo_to_embedding(image)
+        if embedding is None:
+            raise HTTPException(
+                status_code=400,
+                detail="No face detected in photo"
+            )
+    else:
+        embedding = generator.sketch_to_embedding(image)
+
+    return EmbeddingResponse(
+        embedding=embedding.tolist(),
+        model_name=generator.model_name,
+        model_version=generator.model_version
+    )
+

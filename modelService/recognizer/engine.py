@@ -1,4 +1,4 @@
-from modelService.recognizer.db_loader import load_embedding_db
+from recognizer.db_loader import load_embedding_db
 from sklearn.metrics.pairwise import cosine_similarity
 import os
 import base64
