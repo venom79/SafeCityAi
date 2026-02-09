@@ -420,3 +420,110 @@ export const getCasePersons = async (req, res) => {
     });
   }
 };
+
+export const requestWithdrawCase = async (req, res) => {
+  try {
+    if (req.user.role !== ROLES.USER) {
+      return res.status(403).json({
+        success: false,
+        message: "Only case owner can request withdrawal",
+      });
+    }
+
+    if (
+      ![
+        CASE_STATUS.SUBMITTED,
+        CASE_STATUS.UNDER_REVIEW,
+        CASE_STATUS.APPROVED,
+      ].includes(req.case.status)
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: "Case cannot be withdrawn in current state",
+      });
+    }
+
+    await prisma.cases.update({
+      where: { id: req.case.id },
+      data: {
+        status: CASE_STATUS.WITHDRAW_REQUESTED,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Withdrawal request submitted",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const confirmWithdrawCase = async (req, res) => {
+  try {
+    if (req.case.status !== CASE_STATUS.WITHDRAW_REQUESTED) {
+      return res.status(409).json({
+        success: false,
+        message: "No withdrawal request pending",
+      });
+    }
+
+    await prisma.cases.update({
+      where: { id: req.case.id },
+      data: {
+        status: CASE_STATUS.WITHDRAWN,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Case withdrawn successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const closeCase = async (req, res) => {
+  try {
+    const allowedStatuses = [
+      CASE_STATUS.UNDER_REVIEW,
+      CASE_STATUS.APPROVED,
+      CASE_STATUS.WITHDRAWN,
+    ];
+
+    if (!allowedStatuses.includes(req.case.status)) {
+      return res.status(409).json({
+        success: false,
+        message: `Case cannot be closed from status ${req.case.status}`,
+      });
+    }
+
+    await prisma.cases.update({
+      where: { id: req.case.id },
+      data: {
+        status: CASE_STATUS.CLOSED,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Case closed successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
