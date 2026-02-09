@@ -1,7 +1,7 @@
-import RegisterCase from "./RegisterCase"
+import UserDashboard from "./user/UserDashboard"
 
 const Home = () => {
-  return <RegisterCase />
+  return <UserDashboard />
 }
 
 export default Home
