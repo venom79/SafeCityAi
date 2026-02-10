@@ -18,8 +18,9 @@
 // export default App
 
 import { Routes, Route } from "react-router-dom"
-
+import Landing from "./pages/Landing"
 import UserDashboard from "./pages/user/UserDashboard"
+
 import AboutUs from "./pages/user/AboutUs"
 
 import RegisterCase from "./pages/user/RegisterCase"
@@ -34,7 +35,9 @@ import Login from "./pages/Login"
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<UserDashboard />} />
+      <Route path="/" element={<Landing />} />
+<Route path="/dashboard" element={<UserDashboard />} />
+
       <Route path="/about" element={<AboutUs />} />
 
       <Route path="/register-case" element={<RegisterCase />} />
