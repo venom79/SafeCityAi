@@ -1,12 +1,27 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Menu, X, User } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
-  // TODO: Replace with real auth logic
-  const isLoggedIn = false
+  const isLoggedIn = !!user
+
+  const handleLogout = async () => {
+    await logout()
+    navigate("/login")
+  }
+
+  const getDashboardPath = () => {
+    if (!user) return "/login"
+
+    if (user.role === "SUPER_ADMIN") return "/dashboard/superadmin"
+    if (user.role === "ADMIN") return "/dashboard/admin"
+    return "/dashboard/user"
+  }
 
   return (
     <>
@@ -18,8 +33,10 @@ const Navbar = () => {
             SafeCity
           </Link>
 
-          {/* CENTER - Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-10 text-sm font-medium">
+          {/* RIGHT - Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8 text-sm font-medium">
+
+            {/* Main Links */}
             <Link to="/" className="hover:text-gray-300 transition">
               Home
             </Link>
@@ -29,10 +46,8 @@ const Navbar = () => {
             <Link to="/contact" className="hover:text-gray-300 transition">
               Contact
             </Link>
-          </div>
 
-          {/* RIGHT - Desktop Auth */}
-          <div className="hidden md:flex items-center space-x-6 text-sm font-medium">
+            {/* Auth Section */}
             {!isLoggedIn ? (
               <>
                 <Link to="/login" className="hover:text-gray-300 transition">
@@ -48,11 +63,19 @@ const Navbar = () => {
             ) : (
               <>
                 <Link
-                  to="/dashboard/user"
+                  to={getDashboardPath()}
                   className="hover:text-gray-300 transition"
                 >
                   Dashboard
                 </Link>
+
+                <button
+                  onClick={handleLogout}
+                  className="hover:text-gray-300 transition"
+                >
+                  Logout
+                </button>
+
                 <User className="cursor-pointer hover:text-gray-300" />
               </>
             )}
@@ -65,6 +88,7 @@ const Navbar = () => {
           >
             <Menu size={26} />
           </button>
+
         </div>
       </nav>
 
@@ -90,15 +114,9 @@ const Navbar = () => {
         </div>
 
         <div className="flex flex-col space-y-8 px-6 py-10 text-sm font-medium">
-          <Link to="/" onClick={() => setIsOpen(false)}>
-            Home
-          </Link>
-          <Link to="/about" onClick={() => setIsOpen(false)}>
-            About
-          </Link>
-          <Link to="/contact" onClick={() => setIsOpen(false)}>
-            Contact
-          </Link>
+          <Link to="/" onClick={() => setIsOpen(false)}>Home</Link>
+          <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
+          <Link to="/contact" onClick={() => setIsOpen(false)}>Contact</Link>
 
           <div className="border-t border-gray-800 pt-8">
             {!isLoggedIn ? (
@@ -113,15 +131,26 @@ const Navbar = () => {
             ) : (
               <>
                 <Link
-                  to="/dashboard/user"
+                  to={getDashboardPath()}
                   onClick={() => setIsOpen(false)}
                   className="block mb-6"
                 >
                   Dashboard
                 </Link>
-                <div className="flex items-center space-x-3">
+
+                <button
+                  onClick={() => {
+                    setIsOpen(false)
+                    handleLogout()
+                  }}
+                  className="text-left"
+                >
+                  Logout
+                </button>
+
+                <div className="flex items-center space-x-3 mt-6">
                   <User size={18} />
-                  <span>Profile</span>
+                  <span>{user.role}</span>
                 </div>
               </>
             )}

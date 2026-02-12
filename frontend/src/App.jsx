@@ -1,4 +1,6 @@
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, Navigate } from "react-router-dom"
+import { Toaster } from "@/components/ui/sonner"
+import ProtectedRoute from "@/components/ProtectedRoute"
 
 import Layout from "./components/Layout"
 
@@ -8,7 +10,6 @@ import Register from "./pages/Register"
 import Login from "./pages/Login"
 import AboutUs from "./pages/AboutUs"
 import Contact from "./pages/Contact"
-
 
 // Dashboards
 import UserDashboard from "./pages/dashboard/UserDashboard"
@@ -23,40 +24,92 @@ import MyCases from "./pages/user/MyCases"
 import CaseList from "./pages/cases/CaseList"
 import CaseDetail from "./pages/cases/CaseDetail"
 
+// Admin pages
+import AssignedCases from "./pages/dashboard/admin/AssignedCases"
+import CCTV from "./pages/dashboard/admin/CCTV"
+import SketchScan from "./pages/dashboard/admin/SketchScan"
+import Alerts from "./pages/dashboard/admin/Alerts"
+
 function App() {
   return (
-    <Routes>
+    <>
+      <Routes>
 
+        <Route element={<Layout />}>
 
-      {/* Routes using common Layout */}
-      <Route element={<Layout />}>
+          {/* PUBLIC */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
 
-        {/* Public routes */}
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        
-        <Route path="/home" element={<Home />} />
-        <Route path="/" element={<Landing />} />
-        <Route path="/contact" element={<Contact />} />
+          {/* USER */}
+          <Route
+            path="/register-case"
+            element={
+              <ProtectedRoute allowedRoles={["USER"]}>
+                <RegisterCase />
+              </ProtectedRoute>
+            }
+          />
 
+          <Route
+            path="/my-cases"
+            element={
+              <ProtectedRoute allowedRoles={["USER"]}>
+                <MyCases />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* User related */}
-        <Route path="/about" element={<AboutUs />} />
-        <Route path="/register-case" element={<RegisterCase />} />
-        <Route path="/my-cases" element={<MyCases />} />
+          <Route
+            path="/dashboard/user"
+            element={
+              <ProtectedRoute allowedRoles={["USER"]}>
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Dashboards */}
-        <Route path="/dashboard/user" element={<UserDashboard />} />
-        <Route path="/dashboard/admin" element={<AdminDashboard />} />
-        <Route path="/dashboard/superadmin" element={<SuperAdminDashboard />} />
+          {/* ADMIN DASHBOARD WITH NESTED ROUTES */}
+          <Route
+            path="/dashboard/admin"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="assigned-cases" replace />} />
 
-        {/* Cases */}
-        <Route path="/cases" element={<CaseList />} />
-        <Route path="/cases/:id" element={<CaseDetail />} />
+            <Route path="assigned-cases" element={<AssignedCases />} />
 
-      </Route>
+            {/* CASE DETAILS INSIDE DASHBOARD */}
+            <Route path="cases/:id" element={<CaseDetail />} />
 
-    </Routes>
+            <Route path="cctv" element={<CCTV />} />
+            <Route path="sketch-scan" element={<SketchScan />} />
+            <Route path="alerts" element={<Alerts />} />
+          </Route>
+
+          {/* SUPER ADMIN */}
+          <Route
+            path="/dashboard/superadmin"
+            element={
+              <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+        </Route>
+
+      </Routes>
+
+      <Toaster richColors position="top-right" />
+    </>
   )
 }
 
