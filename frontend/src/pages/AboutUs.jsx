@@ -2,7 +2,8 @@ import UserDashboardLayout from "@/components/layout/UserDashboardLayout"
 
 const AboutUs = () => {
   return (
-    <UserDashboardLayout>
+    <> 
+      
       <div className="space-y-12">
 
         {/* HERO SECTION */}
@@ -63,7 +64,7 @@ const AboutUs = () => {
         </div>
 
       </div>
-    </UserDashboardLayout>
+    </>
   )
 }
 
