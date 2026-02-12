@@ -1,58 +1,61 @@
-// import { Routes, Route } from "react-router-dom"
-// import Home  from "./pages/Home"
-// import Layout from "./components/Layout"
-
-// function App() {
-//   return (
-//     <Routes>
-//       <Route element={<Layout/>}>
-//         <Route path="/" element={<Home />} />
-//         {/* add more routes like this below */}
-//         {/* <Route path="/" element={<Home />} /> */}  
-//         {/* <Route path="/" element={<Home />} /> */}
-//       </Route>
-//     </Routes>
-//   )
-// }
-
-// export default App
-
 import { Routes, Route } from "react-router-dom"
-import Landing from "./pages/Landing"
-import UserDashboard from "./pages/user/UserDashboard"
 
-import AboutUs from "./pages/user/AboutUs"
-
-import RegisterCase from "./pages/user/RegisterCase"
-import MyCases from "./pages/user/MyCases"
-import Home  from "./pages/Home"
 import Layout from "./components/Layout"
+
+import Landing from "./pages/Landing"
+import Home from "./pages/Home"
 import Register from "./pages/Register"
 import Login from "./pages/Login"
+import AboutUs from "./pages/AboutUs"
+import Contact from "./pages/Contact"
 
 
+// Dashboards
+import UserDashboard from "./pages/dashboard/UserDashboard"
+import AdminDashboard from "./pages/dashboard/AdminDashboard"
+import SuperAdminDashboard from "./pages/dashboard/SuperAdminDashboard"
+
+// User Pages
+import RegisterCase from "./pages/user/RegisterCase"
+import MyCases from "./pages/user/MyCases"
+
+// Case Pages
+import CaseList from "./pages/cases/CaseList"
+import CaseDetail from "./pages/cases/CaseDetail"
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
-<Route path="/dashboard" element={<UserDashboard />} />
-
-      <Route path="/about" element={<AboutUs />} />
-
-      <Route path="/register-case" element={<RegisterCase />} />
-      <Route path="/my-cases" element={<MyCases />} />
-      <Route element={<Layout/>}>
-        <Route path="/" element={<Home />} />
-         <Route path="/register" element={<Register />} />
-         <Route path="/login" element={<Login />} />
 
 
-        {/* add more routes like this below */}
-        {/* <Route path="/" element={<Home />} /> */}  
-        {/* <Route path="/" element={<Home />} /> */}
+      {/* Routes using common Layout */}
+      <Route element={<Layout />}>
+
+        {/* Public routes */}
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
         
+        <Route path="/home" element={<Home />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/contact" element={<Contact />} />
+
+
+        {/* User related */}
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/register-case" element={<RegisterCase />} />
+        <Route path="/my-cases" element={<MyCases />} />
+
+        {/* Dashboards */}
+        <Route path="/dashboard/user" element={<UserDashboard />} />
+        <Route path="/dashboard/admin" element={<AdminDashboard />} />
+        <Route path="/dashboard/superadmin" element={<SuperAdminDashboard />} />
+
+        {/* Cases */}
+        <Route path="/cases" element={<CaseList />} />
+        <Route path="/cases/:id" element={<CaseDetail />} />
+
       </Route>
+
     </Routes>
   )
 }

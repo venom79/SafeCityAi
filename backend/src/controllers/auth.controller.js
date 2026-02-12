@@ -5,15 +5,24 @@ import { generateRefreshToken, hashRefreshToken, getRefreshTokenExpiry } from ".
 
 export const register = async (req, res) => {
   try {
-    const { email, password, full_name } = req.body;
+    const { email, password, full_name, phone } = req.body;
 
     if (!email || !password || !full_name) {
       return res.status(400).json({ message: "Missing fields" });
     }
 
+    if (phone && phone.length !== 10) {
+      return res.status(400).json({ message: "Invalid phone number" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password too short" });
+    }
+
+
     const existing = await prisma.users.findUnique({ where: { email } });
     if (existing) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Email already registered" });
     }
 
     const password_hash = await hashPassword(password);
@@ -23,7 +32,8 @@ export const register = async (req, res) => {
         email,
         full_name,
         password_hash,
-        role: "SUPER_ADMIN",
+        phone,
+        role: "USER",
       },
     });
 
@@ -81,10 +91,16 @@ export const login = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        accessToken: accessToken,
-        refreshToken: refreshToken,
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role
+        }
       }
-    })
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ 
