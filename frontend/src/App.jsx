@@ -7,6 +7,8 @@ import Home from "./pages/Home"
 import Register from "./pages/Register"
 import Login from "./pages/Login"
 import AboutUs from "./pages/AboutUs"
+import Contact from "./pages/Contact"
+
 
 // Dashboards
 import UserDashboard from "./pages/dashboard/UserDashboard"
@@ -25,15 +27,18 @@ function App() {
   return (
     <Routes>
 
-      {/* Public routes */}
-      <Route path="/register" element={<Register />} />
-      <Route path="/login" element={<Login />} />
 
       {/* Routes using common Layout */}
       <Route element={<Layout />}>
 
+        {/* Public routes */}
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        
         <Route path="/home" element={<Home />} />
         <Route path="/" element={<Landing />} />
+        <Route path="/contact" element={<Contact />} />
+
 
         {/* User related */}
         <Route path="/about" element={<AboutUs />} />
