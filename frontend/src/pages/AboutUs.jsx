@@ -1,70 +1,124 @@
-import UserDashboardLayout from "@/components/layout/UserDashboardLayout"
-
 const AboutUs = () => {
   return (
-    <> 
-      
-      <div className="space-y-12">
+    <div className="min-h-screen bg-white text-black px-6 py-20">
 
-        {/* HERO SECTION */}
-        <div className="relative h-72 rounded-xl overflow-hidden shadow">
-          <img
-            src="https://www.shutterstock.com/image-vector/confident-smiling-police-officer-uniform-260nw-2721538835.jpg"
-            className="w-full h-full object-cover"
-          />
+      <div className="max-w-6xl mx-auto space-y-24">
 
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <h1 className="text-white text-3xl font-semibold">
-              About SafeCity Portal
-            </h1>
-          </div>
+        {/* HERO */}
+        <div className="text-center max-w-3xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            About SafeCityAI
+          </h1>
+
+          <p className="mt-6 text-lg text-gray-600 leading-relaxed">
+            SafeCityAI is an AI-powered case management and real-time
+            facial recognition system built to assist authorities in
+            locating missing and wanted individuals through automated
+            surveillance intelligence.
+          </p>
         </div>
 
-        {/* ABOUT CONTENT */}
-        <div className="max-w-3xl mx-auto text-center space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">
-            Who We Are
+
+        {/* MISSION */}
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+
+          <div>
+            <h2 className="text-3xl font-semibold mb-6">
+              Our Mission
+            </h2>
+
+            <p className="text-gray-700 leading-relaxed mb-6">
+              We aim to bridge the gap between citizen case reporting
+              and real-time surveillance by integrating structured
+              workflows with deep learning-based facial recognition.
+            </p>
+
+            <p className="text-gray-700 leading-relaxed">
+              SafeCityAI reduces manual CCTV monitoring, accelerates
+              investigations, and improves response time through
+              intelligent alert generation and automated detection.
+            </p>
+          </div>
+
+          <div className="border border-gray-200 rounded-xl p-10 bg-gray-50">
+            <h3 className="text-xl font-semibold mb-4">
+              Core Capabilities
+            </h3>
+
+            <ul className="space-y-3 text-gray-700">
+              <li>• Role-based case management workflow</li>
+              <li>• AI face embedding generation & vector search</li>
+              <li>• Real-time CCTV stream processing</li>
+              <li>• Alert generation with confidence scoring</li>
+              <li>• Structured approval & assignment system</li>
+            </ul>
+          </div>
+
+        </div>
+
+
+        {/* SYSTEM FLOW */}
+        <div>
+          <h2 className="text-3xl font-semibold text-center mb-16">
+            How the System Operates
           </h2>
 
-          <p className="text-gray-600 leading-relaxed">
-            SafeCity Portal is designed to help citizens report missing
-            person cases quickly and efficiently. The platform connects
-            users with authorities by providing a simple way to submit
-            case details, upload photographs, and track updates.
-          </p>
+          <div className="grid md:grid-cols-3 gap-10">
 
-          <p className="text-gray-600 leading-relaxed">
-            Our goal is to improve response time and make the reporting
-            process easier, more transparent, and accessible to everyone.
-          </p>
+            <div className="border border-gray-200 rounded-xl p-8 hover:shadow-lg transition">
+              <h3 className="text-xl font-semibold mb-4">
+                01. Case Registration
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Users register missing or wanted individuals,
+                upload photos, and submit identifying details
+                for review and approval.
+              </p>
+            </div>
+
+            <div className="border border-gray-200 rounded-xl p-8 hover:shadow-lg transition">
+              <h3 className="text-xl font-semibold mb-4">
+                02. AI Processing
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Deep learning models generate face embeddings
+                stored in a vector database for similarity-based
+                matching using cosine distance thresholds.
+              </p>
+            </div>
+
+            <div className="border border-gray-200 rounded-xl p-8 hover:shadow-lg transition">
+              <h3 className="text-xl font-semibold mb-4">
+                03. Real-Time Detection
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                CCTV frames are analyzed continuously.
+                Confirmed matches trigger alerts linked to
+                cases, persons, cameras, and confidence scores.
+              </p>
+            </div>
+
+          </div>
         </div>
 
-        {/* FEATURE SECTION */}
-        <div className="grid grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow p-5 text-center">
-            <h3 className="font-semibold mb-2">Report Cases</h3>
-            <p className="text-gray-500 text-sm">
-              Register missing person cases easily online.
-            </p>
-          </div>
 
-          <div className="bg-white rounded-xl shadow p-5 text-center">
-            <h3 className="font-semibold mb-2">Upload Details</h3>
-            <p className="text-gray-500 text-sm">
-              Provide photos and identifying information.
-            </p>
-          </div>
+        {/* IMPACT */}
+        <div className="bg-black text-white rounded-2xl p-16 text-center">
+          <h2 className="text-3xl font-semibold">
+            Real-World Impact
+          </h2>
 
-          <div className="bg-white rounded-xl shadow p-5 text-center">
-            <h3 className="font-semibold mb-2">Track Progress</h3>
-            <p className="text-gray-500 text-sm">
-              Monitor updates from authorities.
-            </p>
-          </div>
+          <p className="mt-6 max-w-3xl mx-auto text-gray-300 leading-relaxed">
+            SafeCityAI enables faster identification of missing
+            and wanted individuals, reduces manual surveillance
+            workload, and enhances public safety response time
+            through intelligent automation and structured oversight.
+          </p>
         </div>
 
       </div>
-    </>
+
+    </div>
   )
 }
 
