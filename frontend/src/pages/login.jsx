@@ -4,9 +4,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import api from "@/lib/axios"
+import { toast } from "sonner"
+import { useAuth } from "@/context/AuthContext"
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const [form, setForm] = useState({
     email: "",
@@ -43,16 +47,29 @@ export default function Login() {
     try {
       setLoading(true)
 
-      // TODO: connect to backend login API
-      console.log(form)
+      const res = await api.post("/auth/login", {
+        email: form.email,
+        password: form.password
+      })
 
-      // simulate success
-      setTimeout(() => {
+      const { accessToken, refreshToken, user } = res.data.data
+
+      // Use AuthContext instead of manual localStorage
+      login(user, accessToken, refreshToken)
+
+      toast.success("Login successful")
+
+      // Redirect based on role
+      if (user.role === "SUPER_ADMIN") {
+        navigate("/dashboard/superadmin")
+      } else if (user.role === "ADMIN") {
+        navigate("/dashboard/admin")
+      } else {
         navigate("/dashboard/user")
-      }, 1000)
+      }
 
     } catch (err) {
-      setError("Invalid credentials")
+      toast.error(err.response?.data?.message || "Invalid credentials")
     } finally {
       setLoading(false)
     }

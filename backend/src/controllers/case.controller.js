@@ -396,11 +396,22 @@ export const getCasePersons = async (req, res) => {
       },
       select: {
         id: true,
-        full_name: true,
         category: true,
+        full_name: true,
+        alias: true,
         gender: true,
         age: true,
+        height_cm: true,
+        weight_kg: true,
+        skin_tone: true,
+        eye_color: true,
+        hair_color: true,
+        last_known_clothing: true,
+        distinguishing_marks: true,
+        description: true,
         is_primary: true,
+        created_at: true,
+        updated_at: true,
       },
       orderBy: [
         { is_primary: "desc" },
@@ -412,6 +423,7 @@ export const getCasePersons = async (req, res) => {
       success: true,
       data: casePersons,
     });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({
@@ -420,6 +432,7 @@ export const getCasePersons = async (req, res) => {
     });
   }
 };
+
 
 export const requestWithdrawCase = async (req, res) => {
   try {

@@ -26,11 +26,11 @@ router.post("/:id/reject",authMiddleware,requireRole(ROLES.SUPER_ADMIN),requireC
 router.post("/:id/assign",authMiddleware,requireRole(ROLES.SUPER_ADMIN),requireCaseAccess,assignCase);
 
 //user actions
-router.post(":id/withdraw",authMiddleware,requireRole(ROLES.USER),requireCaseAccess,requestWithdrawCase);
+router.post("/:id/withdraw",authMiddleware,requireRole(ROLES.USER),requireCaseAccess,requestWithdrawCase);
 
 //admin actions
-router.post(":id/withdraw/confirm",authMiddleware,requireRole(ROLES.USER),requireCaseAccess,confirmWithdrawCase);
-router.post(":id/close",authMiddleware,requireRole(ROLES.ADMIN,ROLES.SUPER_ADMIN),requireCaseAccess,closeCase);
+router.post("/:id/withdraw/confirm",authMiddleware,requireRole(ROLES.USER),requireCaseAccess,confirmWithdrawCase);
+router.post("/:id/close",authMiddleware,requireRole(ROLES.ADMIN,ROLES.SUPER_ADMIN),requireCaseAccess,closeCase);
 
 
 //case person details

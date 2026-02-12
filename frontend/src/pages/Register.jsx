@@ -5,13 +5,12 @@ import { Label } from "@/components/ui/label"
 import { useNavigate } from "react-router-dom"
 import { Eye, EyeOff } from "lucide-react"
 import api from "@/lib/axios"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
+
 
 
 export default function Register() {
   const navigate = useNavigate()
-
-  const { toast } = useToast()
 
 
   const [form, setForm] = useState({
@@ -72,19 +71,12 @@ export default function Register() {
         phone: form.phone
       })
 
-      toast({
-        title: "Account created",
-        description: "Registration successful. Please login.",
-      })
+      toast.success("Account created successfully")
 
       navigate("/login")
 
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Registration failed",
-        description: err.response?.data?.message || "Something went wrong",
-      })
+      toast.error(err.response?.data?.message || "Registration failed")
     } finally {
       setLoading(false)
     }
