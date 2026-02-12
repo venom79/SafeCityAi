@@ -3,7 +3,9 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
 import caseRoutes from "./routes/case.routes.js";
 import casePersonRoutes from "./routes/casePerson.routes.js";
+import faceSearchRoutes from "./routes/faceSearch.routes.js";
 import testRoutes from "./routes/test.routes.js";
+import { initCameraWebSocket } from "./ws/camera.ws.js"
 import { fileURLToPath } from "url";
 import path from "path";
 
@@ -26,4 +28,5 @@ app.use("/auth", authRoutes);
 app.use("/test", testRoutes);
 app.use("/cases",caseRoutes);
 app.use("/case-persons", casePersonRoutes);
+app.use("/face-search", faceSearchRoutes);
 export default app;

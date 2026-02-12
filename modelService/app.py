@@ -10,8 +10,9 @@ from typing import List, Optional
 
 import numpy as np
 from PIL import Image
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
+
 
 app = FastAPI(
     title="SafeCity AI – Model Service",
@@ -159,3 +160,28 @@ def generate_embedding(payload: EmbeddingRequest):
         model_version=generator.model_version
     )
 
+@app.post("/embedding/file", response_model=EmbeddingResponse)
+async def generate_embedding_file(
+    image: UploadFile = File(...),
+    image_type: ImageType = ImageType.PHOTO
+):
+    generator: EmbeddingGenerator = app.state.embedding_generator
+
+    try:
+        contents = await image.read()
+        img = Image.open(io.BytesIO(contents))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    if image_type == ImageType.PHOTO:
+        embedding = generator.photo_to_embedding(img)
+        if embedding is None:
+            raise HTTPException(status_code=400, detail="No face detected")
+    else:
+        embedding = generator.sketch_to_embedding(img)
+
+    return EmbeddingResponse(
+        embedding=embedding.tolist(),
+        model_name=generator.model_name,
+        model_version=generator.model_version
+    )

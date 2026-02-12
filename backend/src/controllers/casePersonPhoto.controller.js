@@ -2,6 +2,9 @@ import prisma from "../db/prisma.js";
 import { PHOTO_SOURCE } from "../constants/photoSource.js";
 import { ROLES } from "../constants/roles.js";
 
+import { generatePhotoEmbedding } from "../services/faceEmbedding.service.js";
+
+
 export const uploadPersonPhoto = async (req, res) => {
   try {
     if (!req.file) {
@@ -14,7 +17,7 @@ export const uploadPersonPhoto = async (req, res) => {
     const { is_primary } = req.body;
     const personId = req.params.personId;
 
-    // 1️⃣ Fetch person category (MISSING / WANTED)
+    // 1️⃣ Fetch person
     const person = await prisma.case_person.findUnique({
       where: { id: personId },
       select: { category: true },
@@ -27,8 +30,7 @@ export const uploadPersonPhoto = async (req, res) => {
       });
     }
 
-    // 2️⃣ Business rule:
-    // Wanted → only ADMIN / SUPER_ADMIN
+    // 2️⃣ Wanted → admin only
     if (
       person.category === "WANTED" &&
       ![ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(req.user.role)
@@ -39,11 +41,10 @@ export const uploadPersonPhoto = async (req, res) => {
       });
     }
 
-    // 3️⃣ Proper boolean parsing
     const finalIsPrimaryRequested =
       is_primary === true || is_primary === "true";
 
-    // 4️⃣ Transaction to avoid race conditions
+    // 3️⃣ Create photo safely (transaction)
     const photo = await prisma.$transaction(async (tx) => {
       const existingPrimary = await tx.case_person_photos.findFirst({
         where: {
@@ -77,6 +78,51 @@ export const uploadPersonPhoto = async (req, res) => {
       });
     });
 
+    // 4️⃣ Generate embedding (OUTSIDE transaction)
+    try {
+      const result = await generatePhotoEmbedding(req.file.path);
+
+      const vectorLiteral = `[${result.embedding.join(",")}]`;
+
+      await prisma.$executeRaw`
+        INSERT INTO face_embeddings (
+          case_person_id,
+          photo_id,
+          embedding,
+          model_name,
+          model_version
+        )
+        VALUES (
+          ${personId}::uuid,
+          ${photo.id}::uuid,
+          ${vectorLiteral}::vector,
+          ${result.model_name},
+          ${result.model_version}
+        )
+      `;
+
+
+
+      await prisma.case_person_photos.update({
+        where: { id: photo.id },
+        data: {
+          face_detected: true,
+          embedding_generated: true,
+        },
+      });
+    } catch (mlError) {
+      console.warn("Embedding generation failed:", mlError.message);
+
+      // Face not detected OR model error
+      await prisma.case_person_photos.update({
+        where: { id: photo.id },
+        data: {
+          face_detected: false,
+          embedding_generated: false,
+        },
+      });
+    }
+
     return res.status(201).json({
       success: true,
       data: {
@@ -99,6 +145,7 @@ export const uploadPersonPhoto = async (req, res) => {
     });
   }
 };
+
 
 export const getPersonPhotos = async (req, res) => {
   try {
