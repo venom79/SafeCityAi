@@ -183,6 +183,7 @@ const ManageUsers = () => {
                   <>
                     <CheckCircle size={16} />
                     Unban
+                    
                   </>
                 )}
               </button>
