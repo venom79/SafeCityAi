@@ -29,6 +29,8 @@ import AssignedCases from "./pages/dashboard/admin/AssignedCases"
 import CCTV from "./pages/dashboard/admin/CCTV"
 import SketchScan from "./pages/dashboard/admin/SketchScan"
 import Alerts from "./pages/dashboard/admin/Alerts"
+import ManageUsers from "./pages/dashboard/superAdmin/ManageUsers"
+import WithdrawRequests from "./pages/dashboard/superAdmin/WithdrawRequests"
 
 function App() {
   return (
@@ -102,7 +104,16 @@ function App() {
                 <SuperAdminDashboard />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="cases" replace />} />
+            <Route path="cases" element={<CaseList />} />
+            <Route path="cases/:id" element={<CaseDetail />} />
+            <Route path="users" element={<ManageUsers />} />
+            <Route path="alerts" element={<Alerts />} />
+            <Route path="withdraw-requests" element={<WithdrawRequests />} />
+            <Route path="cctv" element={<CCTV />} />
+            <Route path="sketch-scan" element={<SketchScan />} />
+          </Route>
 
         </Route>
 

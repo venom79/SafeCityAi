@@ -22,6 +22,12 @@ const categoryColors = {
   WANTED: "bg-red-100 text-red-800",
 }
 
+const dummyAdmins = [
+  { id: "admin-1", name: "Inspector Raj Patel" },
+  { id: "admin-2", name: "Officer Meera Singh" },
+  { id: "admin-3", name: "Sub-Inspector Arjun Rao" },
+]
+
 const CaseDetail = () => {
   const { id } = useParams()
   const { user } = useAuth()
@@ -32,6 +38,15 @@ const CaseDetail = () => {
   const [expandedPerson, setExpandedPerson] = useState(null)
   const [selectedImage, setSelectedImage] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [closing, setClosing] = useState(false)
+  const [showCloseModal, setShowCloseModal] = useState(false)
+  const [selectedAdmin, setSelectedAdmin] = useState("")
+  const [rejectReason, setRejectReason] = useState("")
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
+  const [withdrawLoading, setWithdrawLoading] = useState(false)
 
   const navigate = useNavigate()
 
@@ -79,6 +94,104 @@ const CaseDetail = () => {
       setLoading(false)
     }
   }
+
+  const handleCloseCase = async () => {
+    try {
+      setClosing(true)
+
+      await api.post(`/cases/${id}/close`)
+
+      toast.success("Case closed successfully")
+      setShowCloseModal(false)
+      fetchCaseDetails()
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to close case")
+    } finally {
+      setClosing(false)
+    }
+  }
+
+  const handleAccept = async () => {
+    try {
+      setActionLoading(true)
+      await api.post(`/cases/${id}/accept`)
+      toast.success("Case approved")
+      fetchCaseDetails()
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to approve case")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleReject = async () => {
+    try {
+      if (!rejectReason.trim()) {
+        toast.error("Rejection reason is required")
+        return
+      }
+
+      setActionLoading(true)
+
+      await api.post(`/cases/${id}/reject`, {
+        reason: rejectReason,
+      })
+
+      toast.success("Case rejected")
+      setShowRejectModal(false)
+      setRejectReason("")
+      fetchCaseDetails()
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to reject case")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleAssign = async () => {
+    try {
+      if (!selectedAdmin) {
+        toast.error("Select an admin first")
+        return
+      }
+
+      setActionLoading(true)
+
+      await api.post(`/cases/${id}/assign`, {
+        adminId: selectedAdmin,
+      })
+
+      toast.success("Case assigned successfully")
+      setShowAssignModal(false)
+      setSelectedAdmin("")
+      fetchCaseDetails()
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to assign case")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleConfirmWithdraw = async () => {
+    try {
+      setWithdrawLoading(true)
+
+      await api.post(`/cases/${id}/withdraw/confirm`)
+
+      toast.success("Case marked as withdrawn")
+      setShowWithdrawModal(false)
+      fetchCaseDetails()
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to confirm withdrawal")
+    } finally {
+      setWithdrawLoading(false)
+    }
+  }
+
 
   if (loading) return <div className="py-20 text-center">Loading...</div>
   if (!caseData) return <div className="py-20 text-center">Case not found</div>
@@ -144,6 +257,141 @@ const CaseDetail = () => {
           <p className="text-sm">{caseData.description || "No description provided"}</p>
         </div>
       </div>
+
+      {/* ================= ADMIN ACTIONS ================= */}
+      {user?.role === "ADMIN" && caseData.status !== "CLOSED" && (
+        <div className="bg-red-50 rounded-xl shadow-sm p-6 space-y-4">
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+            <div>
+              <h3 className="text-sm font-semibold text-red-700">
+                Close Case
+              </h3>
+              <p className="text-xs text-red-600 mt-1">
+                Case should only be closed after full investigation and completion.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowCloseModal(true)}
+              className="px-5 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition cursor-pointer"
+            >
+              Close Case
+            </button>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ================= SUPER ADMIN ACTIONS ================= */}
+      {user?.role === "SUPER_ADMIN" && (
+
+        <div className="bg-indigo-50 rounded-xl shadow-sm p-6 space-y-6">
+
+          {/* SUBMITTED → ACCEPT / REJECT */}
+          {caseData.status === "SUBMITTED" && (
+            <div className="flex flex-wrap gap-4">
+
+              <button
+                onClick={handleAccept}
+                disabled={actionLoading}
+                className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition cursor-pointer"
+              >
+                {actionLoading ? "Processing..." : "Accept Case"}
+              </button>
+
+              <button
+                onClick={() => setShowRejectModal(true)}
+                className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition cursor-pointer"
+              >
+                Reject Case
+              </button>
+
+            </div>
+          )}
+
+          {/* APPROVED → ASSIGN ADMIN */}
+          {caseData.status === "APPROVED" && (
+            <div className="flex flex-wrap items-center gap-4">
+
+              <select
+                value={selectedAdmin}
+                onChange={(e) => setSelectedAdmin(e.target.value)}
+                className="border px-3 py-2 rounded-lg text-sm"
+              >
+                <option value="">Select Admin</option>
+                {dummyAdmins.map(admin => (
+                  <option key={admin.id} value={admin.id}>
+                    {admin.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleAssign}
+                disabled={actionLoading}
+                className="px-5 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition cursor-pointer" 
+              >
+                Assign Admin
+              </button>
+
+            </div>
+          )}
+
+          {/* UNDER REVIEW → REASSIGN */}
+          {caseData.status === "UNDER_REVIEW" && (
+            <div className="flex flex-wrap items-center gap-4">
+
+              <select
+                value={selectedAdmin}
+                onChange={(e) => setSelectedAdmin(e.target.value)}
+                className="border px-3 py-2 rounded-lg text-sm"
+              >
+                <option value="">Reassign Admin</option>
+                {dummyAdmins.map(admin => (
+                  <option key={admin.id} value={admin.id}>
+                    {admin.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleAssign}
+                disabled={actionLoading}
+                className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition  cursor-pointer"
+              >
+                Reassign
+              </button>
+
+            </div>
+          )}
+
+          {/* WITHDRAW REQUESTED → CONFIRM WITHDRAW */}
+          {caseData.status === "WITHDRAW_REQUESTED" && (
+            <div className="bg-orange-50 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+              <div>
+                <h3 className="text-sm font-semibold text-orange-700">
+                  Withdrawal Request Pending
+                </h3>
+                <p className="text-xs text-orange-600 mt-1">
+                  The case owner has requested withdrawal. Review investigation status before confirming.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowWithdrawModal(true)}
+                className="px-5 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition cursor-pointer"
+              >
+                Confirm Withdrawal
+              </button>
+
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ================= PERSONS ================= */}
       <div className="space-y-10">
@@ -302,6 +550,131 @@ const CaseDetail = () => {
               alt="preview"
               className="w-full max-h-[80vh] object-contain rounded-lg"
             />
+          </div>
+        </div>
+      )}
+
+
+      {/* ================= CLOSE CASE MODAL ================= */}
+      {showCloseModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-xl w-full max-w-md p-6 space-y-6 shadow-lg">
+
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Confirm Case Closure
+              </h2>
+              <p className="text-sm text-gray-600">
+                This action will mark the case as CLOSED.
+                Make sure investigation is fully completed before proceeding.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+
+              <button
+                onClick={() => setShowCloseModal(false)}
+                disabled={closing}
+                className="px-4 py-2 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleCloseCase}
+                disabled={closing}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 cursor-pointer"
+              >
+                {closing ? "Closing..." : "Confirm Close"}
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ================= REJECT MODAL ================= */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-xl w-full max-w-md p-6 space-y-6 shadow-lg">
+
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold">
+                Reject Case
+              </h2>
+              <p className="text-sm text-gray-600">
+                Provide a clear reason for rejecting this case.
+              </p>
+            </div>
+
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={4}
+              className="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              placeholder="Enter rejection reason..."
+            />
+
+            <div className="flex justify-end gap-3">
+
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="px-4 py-2 bg-gray-100 rounded-lg cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleReject}
+                disabled={actionLoading}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg cursor-pointer"
+              >
+                {actionLoading ? "Rejecting..." : "Confirm Reject"}
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+      
+
+      {/* ================= WITHDRAW CONFIRM MODAL ================= */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-xl w-full max-w-md p-6 space-y-6 shadow-lg">
+
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold">
+                Confirm Withdrawal
+              </h2>
+              <p className="text-sm text-gray-600">
+                This will permanently mark the case as WITHDRAWN.
+                Ensure the investigation has been properly reviewed.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+
+              <button
+                onClick={() => setShowWithdrawModal(false)}
+                disabled={withdrawLoading}
+                className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleConfirmWithdraw}
+                disabled={withdrawLoading}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition disabled:opacity-50"
+              >
+                {withdrawLoading ? "Processing..." : "Confirm"}
+              </button>
+
+            </div>
+
           </div>
         </div>
       )}
