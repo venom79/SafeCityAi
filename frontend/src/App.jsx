@@ -47,15 +47,15 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
 
-          {/* USER */}
-          <Route
-            path="/register-case"
-            element={
-              <ProtectedRoute allowedRoles={["USER"]}>
-                <RegisterCase />
-              </ProtectedRoute>
-            }
-          />
+         {/* USER DASHBOARD */}
+<Route path="/dashboard/user" element={<UserDashboard />}>
+  <Route index element={<Home />} />
+  <Route path="alerts" element={<MyCases />} />
+</Route>
+
+{/* REGISTER CASE PAGE (separate route) */}
+<Route path="/register-case" element={<RegisterCase />} />
+
 
           <Route
             path="/my-cases"
