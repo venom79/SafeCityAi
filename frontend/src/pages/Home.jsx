@@ -1,4 +1,4 @@
-import UserDashboard from "./user/UserDashboard"
+import UserDashboard from "./dashboard/UserDashboard"
 
 const Home = () => {
   return <UserDashboard />
