@@ -539,4 +539,3 @@ export const closeCase = async (req, res) => {
     });
   }
 };
-
