@@ -57,9 +57,9 @@ function App() {
           <Route
             path="/dashboard/user"
             element={
-              // <ProtectedRoute allowedRoles={["USER"]}>
+              <ProtectedRoute allowedRoles={["USER"]}>
                 <UserDashboard />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           >
             <Route index element={<MyDashboard />} />
@@ -74,9 +74,9 @@ function App() {
           <Route
             path="/dashboard/admin"
             element={
-              // <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminDashboard />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           >
             <Route index element={<Navigate to="assigned-cases" replace />} />
@@ -92,9 +92,9 @@ function App() {
           <Route
             path="/dashboard/superadmin"
             element={
-              // <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+              <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
                 <SuperAdminDashboard />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           >
             <Route index element={<Navigate to="cases" replace />} />

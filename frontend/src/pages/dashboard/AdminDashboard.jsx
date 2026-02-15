@@ -29,6 +29,17 @@ const AdminDashboard = () => {
               </>
             )}
           </NavLink>
+          
+          <NavLink to="register-case" className={tabStyle}>
+            {({ isActive }) => (
+              <>
+                Register Case
+                {isActive && (
+                  <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-white" />
+                )}
+              </>
+            )}
+          </NavLink>
 
           <NavLink to="cctv" className={tabStyle}>
             {({ isActive }) => (
