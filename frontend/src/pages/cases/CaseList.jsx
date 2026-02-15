@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import api from "@/lib/axios"
 import { toast } from "sonner"
+import { useAuth } from "@/context/AuthContext"
 
 const statusColors = {
   SUBMITTED: "bg-yellow-100 text-yellow-800",
@@ -29,6 +30,18 @@ const CaseList = () => {
 
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+
+  const { user } = useAuth()
+
+  const getDashboardBase = () => {
+    if (!user) return "/"
+
+    if (user.role === "SUPER_ADMIN") return "/dashboard/superadmin"
+    if (user.role === "ADMIN") return "/dashboard/admin"
+    if (user.role === "USER") return "/dashboard/user"
+
+    return "/"
+  }
 
   useEffect(() => {
     fetchCases()
@@ -120,7 +133,9 @@ const CaseList = () => {
         {cases.map((item) => (
           <div
             key={item.id}
-            onClick={() => navigate(`/dashboard/superadmin/cases/${item.id}`)}
+            onClick={() =>
+              navigate(`${getDashboardBase()}/cases/${item.id}`)
+            }
             className="bg-gray-50 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer p-6 flex flex-col md:flex-row justify-between gap-6"
           >
 
