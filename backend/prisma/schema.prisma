@@ -99,7 +99,7 @@ model case_person_photos {
 
 model cases {
   id                                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  case_number                       String            @unique
+  case_number                       String?           @unique
   case_type                         case_type
   status                            case_status       @default(SUBMITTED)
   title                             String
@@ -117,6 +117,7 @@ model cases {
   case_person                       case_person[]
   users_cases_assigned_adminTousers users?            @relation("cases_assigned_adminTousers", fields: [assigned_admin], references: [id], onUpdate: NoAction)
   users_cases_created_byTousers     users             @relation("cases_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  complainants                      complainants?
   sketch_searches                   sketch_searches[]
 
   @@index([assigned_admin], map: "idx_cases_assigned_admin")
@@ -259,6 +260,24 @@ model sketch_searches {
   @@index([created_at(sort: Desc)], map: "idx_sketch_searches_time")
 }
 
+model complainants {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  case_id    String    @unique @db.Uuid
+  full_name  String
+  phone      String
+  email      String?
+  gender     String
+  age        Int
+  relation   String
+  aadhaar    String
+  address    String
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  cases      cases     @relation(fields: [case_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_complainant_case")
+
+  @@index([case_id], map: "idx_complainants_case_id")
+}
+
 enum alert_status {
   OPEN
   ACKNOWLEDGED
@@ -293,6 +312,7 @@ enum case_status {
   WITHDRAWN
   CLOSED
   WITHDRAW_REQUESTED
+  DRAFT
 }
 
 enum case_type {

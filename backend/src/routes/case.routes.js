@@ -4,20 +4,31 @@ import { acceptCase,
     assignCase,
     closeCase,
     confirmWithdrawCase,
+    createDraftCase,
     getCaseById, 
     getCasePersons,
     registerCase,
     rejectCase,
     requestWithdrawCase,
+    saveComplainant,
+    submitCase,
+    updateCaseDetails,
     viewAllCase
 } from "../controllers/case.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import requireCaseAccess from "../middlewares/caseAccess.middleware.js";
 import requireRole from "../middlewares/role.middleware.js";
 import { ROLES } from "../constants/roles.js";
+import requireDraft from "../middlewares/requireDraft.js";
 const router = Router();
 
 //requires authorization header
+router.post("/draft", authMiddleware, createDraftCase);
+router.patch("/:id/details", authMiddleware,requireCaseAccess, requireDraft, updateCaseDetails);
+
+//complanant details
+router.patch("/:id/complainant", authMiddleware, requireCaseAccess, requireDraft, saveComplainant);
+
 router.post("/", authMiddleware, registerCase) 
 router.get("/", authMiddleware, viewAllCase);
 router.get("/:id", authMiddleware, requireCaseAccess, getCaseById);
@@ -34,8 +45,13 @@ router.post("/:id/close",authMiddleware,requireRole(ROLES.ADMIN,ROLES.SUPER_ADMI
 
 
 //case person details
-router.post("/:id/person",authMiddleware,requireCaseAccess,addCasePerson);
+router.post("/:id/person",authMiddleware,requireCaseAccess,requireDraft,addCasePerson);
 router.get("/:id/person",authMiddleware,requireCaseAccess,getCasePersons);
+
+
+
+//submit draft
+router.post("/:id/submit", authMiddleware, requireCaseAccess, requireDraft, submitCase);
 
 export default router;
 

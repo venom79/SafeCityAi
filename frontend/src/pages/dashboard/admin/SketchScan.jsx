@@ -49,7 +49,7 @@ const SketchScan = () => {
           case_number: "WANT-82917321",
           similarity: 0.93,
           status: "UNKNOWN",
-          photo: "https://randomuser.me/api/portraits/men/32.jpg",
+          photo: "http://localhost:8080/uploads/sketchScanDemo/main.jpg",
         },
         {
           id: "2",
@@ -57,7 +57,7 @@ const SketchScan = () => {
           case_number: "MISS-22119921",
           similarity: 0.88,
           status: "UNKNOWN",
-          photo: "https://randomuser.me/api/portraits/men/44.jpg",
+          photo: "http://localhost:8080/uploads/sketchScanDemo/2.jpg",
         },
         {
           id: "3",
@@ -65,7 +65,7 @@ const SketchScan = () => {
           case_number: "WANT-55199211",
           similarity: 0.81,
           status: "UNKNOWN",
-          photo: "https://randomuser.me/api/portraits/men/67.jpg",
+          photo: "http://localhost:8080/uploads/sketchScanDemo/3.jpg",
         },
         {
           id: "4",
@@ -73,7 +73,7 @@ const SketchScan = () => {
           case_number: "MISS-88827122",
           similarity: 0.76,
           status: "UNKNOWN",
-          photo: "https://randomuser.me/api/portraits/men/12.jpg",
+          photo: "http://localhost:8080/uploads/sketchScanDemo/4.jpg",
         },
         {
           id: "5",
@@ -81,7 +81,7 @@ const SketchScan = () => {
           case_number: "WANT-33445566",
           similarity: 0.72,
           status: "UNKNOWN",
-          photo: "https://randomuser.me/api/portraits/men/90.jpg",
+          photo: "http://localhost:8080/uploads/sketchScanDemo/5.jpg",
         },
       ])
       setLoading(false)

@@ -13,3 +13,7 @@ backend/uploads
 
 # frontend
 frontend/node_modules
+
+# mediamtx
+mediamtx/LICENSE
+mediamtx/mediamtx.exe

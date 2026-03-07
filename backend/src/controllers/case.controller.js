@@ -3,6 +3,145 @@ import {CASE_TYPE} from "../constants/caseType.js"
 import { ROLES } from "../constants/roles.js";
 import prisma from "../db/prisma.js";
 
+export const createDraftCase = async (req, res) => {
+  try {
+    const created_by = req.user.id;
+    const { caseType } = req.body;
+
+    if (!Object.values(CASE_TYPE).includes(caseType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid case type",
+      });
+    }
+
+    const draftTitle =
+      caseType === CASE_TYPE.MISSING
+        ? `Draft_missingperson_${Date.now()}`
+        : `Draft_wantedperson_${Date.now()}`;
+
+    const draft = await prisma.cases.create({
+      data: {
+        title: draftTitle,
+        case_type: caseType,
+        created_by,
+        status: CASE_STATUS.DRAFT,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Draft created Successfuly",
+      data: {
+        caseId: draft.id,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+};
+
+export const updateCaseDetails = async (req, res) => {
+  try {
+    const { title, description, lastSeenLocation, lastSeenTime } = req.body;
+
+    await prisma.cases.update({
+      where: { id: req.case.id },
+      data: {
+        title,
+        description,
+        last_seen_location: lastSeenLocation,
+        last_seen_time: lastSeenTime,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Case details saved",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+};
+
+export const saveComplainant = async (req, res) => {
+  try {
+    const {
+      full_name,
+      phone,
+      email,
+      gender,
+      age,
+      relation,
+      aadhaar,
+      address,
+    } = req.body;
+
+    await prisma.complainants.upsert({
+      where: {
+        case_id: req.case.id,
+      },
+      update: {
+        full_name,
+        phone,
+        email,
+        gender,
+        age,
+        relation,
+        aadhaar,
+        address,
+      },
+      create: {
+        case_id: req.case.id,
+        full_name,
+        phone,
+        email,
+        gender,
+        age,
+        relation,
+        aadhaar,
+        address,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Complainant saved",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+};
+
+export const submitCase = async (req, res) => {
+  try {
+    const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(-8);
+
+    const case_number =
+      req.case.case_type === CASE_TYPE.MISSING
+        ? `MISS-${suffix}`
+        : `WANT-${suffix}`;
+
+    await prisma.cases.update({
+      where: { id: req.case.id },
+      data: {
+        status: CASE_STATUS.SUBMITTED,
+        case_number,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Case submitted successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+};
 
 export const registerCase = async (req, res) => {
   try {

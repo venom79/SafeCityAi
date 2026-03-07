@@ -37,7 +37,7 @@ const requireCaseAccess = async (req, res, next) => {
     }
 
     // ADMIN → must be assigned admin
-    if (role === ROLES.ADMIN && caseRecord.assigned_admin === userId) {
+    if (role === ROLES.ADMIN && caseRecord.assigned_admin === userId || caseRecord.created_by === userId) {
       req.case = caseRecord;  
       return next();
     }
