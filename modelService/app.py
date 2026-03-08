@@ -13,6 +13,8 @@ from PIL import Image
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
+import threading
+import requests
 
 app = FastAPI(
     title="SafeCity AI – Model Service",
@@ -74,6 +76,80 @@ class EmbeddingResponse(BaseModel):
     embedding: List[float]
     model_name: str
     model_version: str
+
+
+# ─────────────────────────────
+# Camera Worker 
+# ─────────────────────────────
+def camera_worker(camera_id: str, rtsp_url: str):
+
+    print(f"[CAMERA] Starting worker for {camera_id}")
+
+    cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)
+
+    if not cap.isOpened():
+        print("[CAMERA] Failed to open stream")
+        return
+
+    PROCESS_EVERY_N_FRAMES = 5  # camera ~25fps → process ~5fps
+
+    frame_count = 0
+    frame_id = 0
+    fail_count = 0
+
+    engine = app.state.engine
+
+    while True:
+
+        ret, frame = cap.read()
+
+        if not ret:
+            fail_count += 1
+
+            if fail_count > 20:
+                print("[CAMERA] Reconnecting stream...")
+                cap.release()
+                time.sleep(2)
+
+                cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+                cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)
+
+                fail_count = 0
+
+            continue
+
+        fail_count = 0
+
+        frame_count += 1
+
+        # ---- Skip frames but keep consuming stream ----
+        if frame_count % PROCESS_EVERY_N_FRAMES != 0:
+            continue
+
+        frame_id += 1
+
+        start = time.time()
+
+        detections = engine.process_frame(
+            camera_id=camera_id,
+            frame_id=frame_id,
+            frame_bgr=frame
+        )
+
+        if detections:
+            try:
+                requests.post(
+                    "http://localhost:8080/recognitions",
+                    json={
+                        "camera_id": camera_id,
+                        "frame_id": frame_id,
+                        "detections": detections
+                    },
+                    timeout=1
+                )
+            except Exception:
+                pass
 
 
 # ─────────────────────────────
@@ -185,3 +261,21 @@ async def generate_embedding_file(
         model_name=generator.model_name,
         model_version=generator.model_version
     )
+
+class StartCameraRequest(BaseModel):
+    camera_id: str
+    rtsp_url: str
+
+
+@app.post("/camera/start")
+def start_camera(payload: StartCameraRequest):
+
+    thread = threading.Thread(
+        target=camera_worker,
+        args=(payload.camera_id, payload.rtsp_url),
+        daemon=True
+    )
+
+    thread.start()
+
+    return {"status": "started"}

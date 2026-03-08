@@ -10,6 +10,7 @@ backend/node_modules
 backend/generated/prisma
 backend/.env
 backend/uploads
+backend/snapshots
 
 # frontend
 frontend/node_modules
