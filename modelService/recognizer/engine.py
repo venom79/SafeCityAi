@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import torch
 from facenet_pytorch import MTCNN, InceptionResnetV1
+import time
 
 
 MIN_BOX_SIZE = 60
@@ -44,6 +45,7 @@ class FaceRecognitionEngine:
         )
 
         self.state = {}
+        self.last_embedding_time = {}
 
     def decode_image(self, b64):
         data = base64.b64decode(b64)
@@ -91,15 +93,34 @@ class FaceRecognitionEngine:
             if matched is None:
                 matched = cam["next_track_id"]
                 cam["next_track_id"] += 1
-                tracks[matched] = {"box": (x1, y1, x2, y2)}
+                tracks[matched] = {
+                    "box": (x1, y1, x2, y2),
+                    "last_seen": frame_id
+                }
 
             tracks[matched]["box"] = (x1, y1, x2, y2)
+            tracks[matched]["last_seen"] = frame_id
 
             face = self.crop_face(frame_bgr, (x1, y1, x2, y2))
             if face is None:
                 continue
+            
+            face_b64 = self.encode_face(face)
+            if face_b64 is None:
+                continue
+
+            now = time.time()
+
+            key = (camera_id, matched)
+
+            if key in self.last_embedding_time:
+                if now - self.last_embedding_time[key] < 2:
+                    continue
 
             embedding = self.face_to_embedding(face)
+
+            self.last_embedding_time[key] = now
+
             if embedding is None:
                 continue
 
@@ -107,7 +128,25 @@ class FaceRecognitionEngine:
                 "track_id": matched,
                 "bbox": [x1, y1, x2, y2],
                 "embedding": embedding.tolist(),
+                "face_image": face_b64
             })
+        # ----------------------------
+        # CLEAN OLD TRACKS
+        # ----------------------------
+        MAX_MISSING_FRAMES = 50
+
+        tracks_to_delete = []
+
+        for tid, t in tracks.items():
+            if frame_id - t["last_seen"] > MAX_MISSING_FRAMES:
+                tracks_to_delete.append(tid)
+
+        for tid in tracks_to_delete:
+            del tracks[tid]
+
+            key = (camera_id, tid)
+            if key in self.last_embedding_time:
+                del self.last_embedding_time[key]
 
         return results
 
@@ -118,6 +157,12 @@ class FaceRecognitionEngine:
         x2, y2 = min(w, x2), min(h, y2)
         face = frame[y1:y2, x1:x2]
         return face if face.size > 0 else None
+
+    def encode_face(self, face):
+        success, buffer = cv2.imencode(".jpg", face)
+        if not success:
+            return None
+        return base64.b64encode(buffer).decode("utf-8")
 
     def face_to_embedding(self, face):
         rgb = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
