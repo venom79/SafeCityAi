@@ -42,6 +42,108 @@ export const createDraftCase = async (req, res) => {
   }
 };
 
+export const getFullCase = async (req, res) => {
+  try {
+
+    const caseData = await prisma.cases.findUnique({
+      where: { id: req.case.id },
+      include: {
+        complainants: true,
+        case_person: {
+          include: {
+            case_person_photos: true
+          }
+        }
+      }
+    })
+
+    return res.status(200).json({
+      success: true,
+      data: caseData
+    })
+
+  } catch (err) {
+    console.error(err)
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    })
+  }
+}
+
+export const getMyDraftCases = async (req, res) => {
+  try {
+
+    const userId = req.user.id
+
+    let { page = 1, limit = 10 } = req.query
+
+    page = Math.max(parseInt(page), 1)
+    limit = Math.min(parseInt(limit), 20)
+
+    const skip = (page - 1) * limit
+
+    const [drafts, total] = await Promise.all([
+
+      prisma.cases.findMany({
+        where: {
+          created_by: userId,
+          status: CASE_STATUS.DRAFT,
+          is_active: true
+        },
+
+        select: {
+          id: true,
+          title: true,
+          case_type: true,
+          created_at: true,
+          updated_at: true
+        },
+
+        orderBy: {
+          updated_at: "desc"
+        },
+
+        skip,
+        take: limit
+      }),
+
+      prisma.cases.count({
+        where: {
+          created_by: userId,
+          status: CASE_STATUS.DRAFT,
+          is_active: true
+        }
+      })
+
+    ])
+
+    return res.status(200).json({
+      success: true,
+
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      },
+
+      data: drafts
+    })
+
+  } catch (err) {
+
+    console.error(err)
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    })
+
+  }
+}
+
 export const updateCaseDetails = async (req, res) => {
   try {
     const { title, description, lastSeenLocation, lastSeenTime } = req.body;
@@ -79,6 +181,15 @@ export const saveComplainant = async (req, res) => {
       address,
     } = req.body;
 
+    const parsedAge = age ? parseInt(age) : null
+
+    if (parsedAge && (parsedAge < 0 || parsedAge > 120)) {
+      return res.status(400).json({
+        success:false,
+        message:"Invalid age"
+      })
+    }
+
     await prisma.complainants.upsert({
       where: {
         case_id: req.case.id,
@@ -88,8 +199,8 @@ export const saveComplainant = async (req, res) => {
         phone,
         email,
         gender,
-        age,
-        relation,
+        age: parsedAge,
+        relation, 
         aadhaar,
         address,
       },
@@ -99,7 +210,7 @@ export const saveComplainant = async (req, res) => {
         phone,
         email,
         gender,
-        age,
+        age: parsedAge,
         relation,
         aadhaar,
         address,
@@ -572,6 +683,42 @@ export const getCasePersons = async (req, res) => {
   }
 };
 
+export const deleteCasePerson = async (req, res) => {
+  try {
+
+    const { personId } = req.params
+
+    const person = await prisma.case_person.findUnique({
+      where: { id: personId }
+    })
+
+    if (!person || person.case_id !== req.case.id) {
+      return res.status(404).json({
+        success: false,
+        message: "Person not found in this case"
+      })
+    }
+
+    await prisma.case_person.delete({
+      where: { id: personId }
+    })
+
+    return res.status(200).json({
+      success: true,
+      message: "Person removed successfully"
+    })
+
+  } catch (err) {
+
+    console.error(err)
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    })
+
+  }
+}
 
 export const requestWithdrawCase = async (req, res) => {
   try {

@@ -3,6 +3,7 @@ import upload from "../middlewares/upload.middleware.js";
 import {
   uploadPersonPhoto,
   getPersonPhotos,
+  deletePersonPhoto,
 } from "../controllers/casePersonPhoto.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 
@@ -21,4 +22,9 @@ router.get(
   getPersonPhotos
 );
 
+router.delete(
+  "/:personId/photos/:photoId",
+  authMiddleware,
+  deletePersonPhoto
+);
 export default router;

@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import api from "@/lib/axios"
+import { toast } from "sonner"
 
 const statusColors = {
   DRAFT: "bg-gray-200 text-gray-800",
@@ -12,18 +15,32 @@ const typeColors = {
 const DraftCases = () => {
   const navigate = useNavigate()
 
-  // 🔥 Dummy Data
-  const draftCases = [
-    {
-      id: "1",
-      title: "Missing Child - Andheri Area",
-      case_number: "DRAFT-001",
-      case_type: "MISSING",
-      description:
-        "Last seen near Andheri railway station wearing a blue t-shirt and jeans.",
-      updated_at: new Date(),
-    },
-  ]
+  const [draftCases, setDraftCases] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchDrafts()
+  }, [])
+
+  const fetchDrafts = async () => {
+    try {
+      const res = await api.get("/cases/drafts/my")
+
+      setDraftCases(res.data.data || [])
+
+    } catch (err) {
+      console.error(err)
+      toast.error("Failed to load drafts")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleContinue = (id) => {
+    localStorage.setItem("draftCaseId", id)
+
+    navigate(`/dashboard/user/register-case?draft=${id}`)
+  }
 
   return (
     <div className="w-full space-y-10">
@@ -35,8 +52,15 @@ const DraftCases = () => {
         </h1>
       </div>
 
+      {/* ================= LOADING ================= */}
+      {loading && (
+        <div className="text-center py-20 text-gray-500">
+          Loading drafts...
+        </div>
+      )}
+
       {/* ================= EMPTY STATE ================= */}
-      {draftCases.length === 0 && (
+      {!loading && draftCases.length === 0 && (
         <div className="text-center py-20 text-gray-500">
           No draft cases available.
         </div>
@@ -56,7 +80,7 @@ const DraftCases = () => {
 
               <div className="flex items-center gap-3 flex-wrap">
                 <h2 className="text-lg font-semibold">
-                  {item.title}
+                  {item.title || "Untitled Draft"}
                 </h2>
 
                 <span
@@ -73,11 +97,7 @@ const DraftCases = () => {
               </div>
 
               <p className="text-sm text-gray-500">
-                Draft ID: {item.case_number}
-              </p>
-
-              <p className="text-sm text-gray-600">
-                {item.description.slice(0, 120)}...
+                Draft ID: {item.id}
               </p>
 
             </div>
@@ -88,14 +108,12 @@ const DraftCases = () => {
               <div className="text-sm text-gray-500">
                 Last Edited:
                 <div className="font-medium text-gray-700">
-                  {new Date(item.updated_at).toLocaleDateString()}
+                  {new Date(item.updated_at).toLocaleString()}
                 </div>
               </div>
 
               <button
-                onClick={() =>
-                  navigate(`/dashboard/user/register-case?draft=${item.id}`)
-                }
+                onClick={() => handleContinue(item.id)}
                 className="mt-6 bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition"
               >
                 Continue Editing →

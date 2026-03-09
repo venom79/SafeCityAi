@@ -185,3 +185,27 @@ export const getPersonPhotos = async (req, res) => {
     });
   }
 };
+
+export const deletePersonPhoto = async (req, res) => {
+  try {
+
+    await prisma.case_person_photos.delete({
+      where: {
+        id: req.params.photoId
+      }
+    })
+
+    res.status(200).json({
+      success: true
+    })
+
+  } catch (err) {
+
+    console.error(err)
+
+    res.status(500).json({
+      success:false
+    })
+
+  }
+}
