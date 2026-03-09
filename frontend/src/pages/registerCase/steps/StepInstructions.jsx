@@ -3,11 +3,47 @@ import { Label } from "@/components/ui/label"
 import { AlertCircle, FileText } from "lucide-react"
 import { useCaseForm } from "@/context/CaseFormContext"
 import { useAuth } from "@/context/AuthContext"
+import api from "@/lib/axios"
+import { toast } from "sonner"
 
 export default function StepInstructions() {
   const { user } = useAuth()
   const role = user?.role || "USER"
-  const { caseType, setCaseType, setStep, saveDraft } = useCaseForm()
+
+  const {
+    caseType,
+    setCaseType,
+    setStep,
+    saveDraft,
+    caseId,
+    setCaseId
+  } = useCaseForm()
+
+  const handleContinue = async () => {
+    try {
+
+      // create draft only if caseId doesn't exist
+      if (!caseId) {
+        const res = await api.post("/cases/draft", {
+          caseType
+        })
+
+        const newCaseId = res.data.data.caseId
+
+        setCaseId(newCaseId)
+
+        // persist draft id for refresh safety
+        localStorage.setItem("draftCaseId", newCaseId)
+      }
+
+      setStep(2)
+
+    } catch (err) {
+      console.error(err)
+
+      toast.error("Failed to create draft case")
+    }
+  }
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -37,7 +73,10 @@ export default function StepInstructions() {
 
         {role === "ADMIN" && (
           <div className="max-w-md">
-            <Label className="text-sm font-semibold text-gray-700 mb-2 block">Case Type</Label>
+            <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+              Case Type
+            </Label>
+
             <select
               className="w-full border-2 border-gray-300 rounded-lg p-3 text-gray-900 focus:ring-2 focus:ring-black focus:border-black outline-none transition"
               value={caseType}
@@ -51,13 +90,23 @@ export default function StepInstructions() {
       </div>
 
       <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6 border-t border-gray-200">
-        <Button variant="outline" onClick={saveDraft} className="gap-2 w-full sm:w-auto border-black text-black hover:bg-gray-100">
+
+        <Button
+          variant="outline"
+          onClick={saveDraft}
+          className="gap-2 w-full sm:w-auto border-black text-black hover:bg-gray-100"
+        >
           <FileText className="w-4 h-4" />
           Save Draft
         </Button>
-        <Button onClick={() => setStep(2)} className="gap-2 w-full sm:w-auto bg-black hover:bg-gray-800 text-white">
+
+        <Button
+          onClick={handleContinue}
+          className="gap-2 w-full sm:w-auto bg-black hover:bg-gray-800 text-white"
+        >
           Continue <span>→</span>
         </Button>
+
       </div>
     </div>
   )

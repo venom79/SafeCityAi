@@ -60,7 +60,7 @@ const MyDashboard = () => {
 
         <button
           onClick={() => navigate("register-case")}
-          className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-lg hover:bg-zinc-800 transition"
+          className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-lg hover:bg-zinc-800 transition cursor-pointer"
         >
           <FilePlus size={18} />
           Register New Case

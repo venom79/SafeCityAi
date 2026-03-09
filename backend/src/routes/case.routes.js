@@ -5,8 +5,11 @@ import { acceptCase,
     closeCase,
     confirmWithdrawCase,
     createDraftCase,
+    deleteCasePerson,
     getCaseById, 
     getCasePersons,
+    getFullCase,
+    getMyDraftCases,
     registerCase,
     rejectCase,
     requestWithdrawCase,
@@ -31,6 +34,7 @@ router.patch("/:id/complainant", authMiddleware, requireCaseAccess, requireDraft
 
 router.post("/", authMiddleware, registerCase) 
 router.get("/", authMiddleware, viewAllCase);
+router.get("/drafts/my", authMiddleware, getMyDraftCases)
 router.get("/:id", authMiddleware, requireCaseAccess, getCaseById);
 router.post("/:id/accept",authMiddleware,requireRole(ROLES.SUPER_ADMIN),requireCaseAccess,acceptCase);
 router.post("/:id/reject",authMiddleware,requireRole(ROLES.SUPER_ADMIN),requireCaseAccess,rejectCase);
@@ -47,8 +51,11 @@ router.post("/:id/close",authMiddleware,requireRole(ROLES.ADMIN,ROLES.SUPER_ADMI
 //case person details
 router.post("/:id/person",authMiddleware,requireCaseAccess,requireDraft,addCasePerson);
 router.get("/:id/person",authMiddleware,requireCaseAccess,getCasePersons);
+router.delete("/:id/person/:personId",authMiddleware,requireCaseAccess,requireDraft,deleteCasePerson);
 
 
+// get data for drafted case
+router.get("/:id/full", authMiddleware, requireCaseAccess, getFullCase);
 
 //submit draft
 router.post("/:id/submit", authMiddleware, requireCaseAccess, requireDraft, submitCase);
