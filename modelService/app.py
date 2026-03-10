@@ -267,8 +267,13 @@ class StartCameraRequest(BaseModel):
     rtsp_url: str
 
 
+active_cameras = {}
+
 @app.post("/camera/start")
 def start_camera(payload: StartCameraRequest):
+
+    if payload.camera_id in active_cameras:
+        return {"status": "already_running"}
 
     thread = threading.Thread(
         target=camera_worker,
@@ -277,5 +282,7 @@ def start_camera(payload: StartCameraRequest):
     )
 
     thread.start()
+
+    active_cameras[payload.camera_id] = thread
 
     return {"status": "started"}

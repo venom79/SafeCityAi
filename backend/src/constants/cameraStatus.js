@@ -1,0 +1,5 @@
+export const CAMERA_STATUS  = {
+    ACTIVE : 'ACTIVE',
+    DISABLED : 'DISABLED',
+    MAINTENANCE : 'MAINTENANCE'
+}
