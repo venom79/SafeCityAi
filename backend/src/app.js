@@ -5,8 +5,9 @@ import caseRoutes from "./routes/case.routes.js";
 import casePersonRoutes from "./routes/casePerson.routes.js";
 import faceSearchRoutes from "./routes/faceSearch.routes.js";
 import recognitionRoutes from "./routes/recognition.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js"
+import cameraRoutes from "./routes/camera.routes.js"
 import testRoutes from "./routes/test.routes.js";
-import { initCameraWebSocket } from "./ws/camera.ws.js"
 import { fileURLToPath } from "url";
 import path from "path";
 
@@ -41,4 +42,6 @@ app.use("/cases",caseRoutes);
 app.use("/case-persons", casePersonRoutes);
 app.use("/face-search", faceSearchRoutes);
 app.use("/recognitions", recognitionRoutes);
+app.use("/dashboard", dashboardRoutes)
+app.use("/cameras", cameraRoutes)
 export default app;
