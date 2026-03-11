@@ -17,6 +17,6 @@ server.listen(PORT, async () => {
   console.log(`WS: ws://localhost:${PORT}`)
 
   // Start camera ingestion automatically
-  await startAllCameras()
+  // await startAllCameras()
 
 })
