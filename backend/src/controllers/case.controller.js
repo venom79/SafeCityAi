@@ -352,7 +352,11 @@ export const viewAllCase = async (req, res) => {
     limit = Math.min(parseInt(limit) || 10, 50);
     const skip = (page - 1) * limit;
 
-    const where = {};
+    const where = {
+      status: {
+        not: CASE_STATUS.DRAFT
+      }
+    };
 
     if (status) where.status = status;
     if (caseType) where.case_type = caseType;
@@ -722,13 +726,23 @@ export const deleteCasePerson = async (req, res) => {
 
 export const requestWithdrawCase = async (req, res) => {
   try {
-    if (req.user.role !== ROLES.USER) {
-      return res.status(403).json({
+
+    if (req.case.status === CASE_STATUS.WITHDRAW_REQUESTED) {
+      return res.status(409).json({
         success: false,
-        message: "Only case owner can request withdrawal",
+        message: "Withdrawal request already submitted",
       });
     }
 
+    // Only case creator can request withdrawal
+    if (req.case.created_by !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the case creator can request withdrawal",
+      });
+    }
+
+    // Only allowed states
     if (
       ![
         CASE_STATUS.SUBMITTED,
@@ -742,10 +756,21 @@ export const requestWithdrawCase = async (req, res) => {
       });
     }
 
+    const { reason } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Withdrawal reason is required",
+      });
+    }
+
     await prisma.cases.update({
       where: { id: req.case.id },
       data: {
         status: CASE_STATUS.WITHDRAW_REQUESTED,
+        withdraw_reason: reason.trim(),
+        withdraw_requested_at: new Date(),
       },
     });
 
@@ -753,6 +778,7 @@ export const requestWithdrawCase = async (req, res) => {
       success: true,
       message: "Withdrawal request submitted",
     });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({
@@ -823,5 +849,103 @@ export const closeCase = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+export const getWithdrawRequests = async (req, res) => {
+  try {
+
+    const cases = await prisma.cases.findMany({
+      where: {
+        status: CASE_STATUS.WITHDRAW_REQUESTED
+      },
+      orderBy: {
+        withdraw_requested_at: "desc"
+      },
+      select: {
+        id: true,
+        case_number: true,
+        title: true,
+        case_type: true,
+        description: true,
+        status: true,
+        withdraw_reason: true,
+        withdraw_requested_at: true,
+        created_at: true
+      }
+    });
+
+    res.json({
+      success: true,
+      data: cases
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch withdrawal requests"
+    });
+
+  }
+};
+
+export const rejectWithdrawRequest = async (req, res) => {
+  try {
+
+    const caseId = req.params.id;
+
+    const caseData = await prisma.cases.findUnique({
+      where: { id: caseId },
+      select: {
+        status: true,
+        assigned_admin: true
+      }
+    });
+
+    if (!caseData) {
+      return res.status(404).json({
+        success: false,
+        message: "Case not found"
+      });
+    }
+
+    if (caseData.status !== CASE_STATUS.WITHDRAW_REQUESTED) {
+      return res.status(400).json({
+        success: false,
+        message: "No withdrawal request to reject"
+      });
+    }
+
+    const newStatus =
+      caseData.assigned_admin
+        ? CASE_STATUS.UNDER_REVIEW
+        : CASE_STATUS.APPROVED;
+
+    const updatedCase = await prisma.cases.update({
+      where: { id: caseId },
+      data: {
+        status: newStatus,
+        withdraw_reason: null,
+        withdraw_requested_at: null,
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: updatedCase
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reject withdrawal request"
+    });
+
   }
 };

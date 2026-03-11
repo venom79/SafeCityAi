@@ -22,12 +22,6 @@ const categoryColors = {
   WANTED: "bg-red-100 text-red-800",
 }
 
-const dummyAdmins = [
-  { id: "admin-1", name: "Inspector Raj Patel" },
-  { id: "admin-2", name: "Officer Meera Singh" },
-  { id: "admin-3", name: "Sub-Inspector Arjun Rao" },
-]
-
 const CaseDetail = () => {
   const { id } = useParams()
   const { user } = useAuth()
@@ -47,12 +41,19 @@ const CaseDetail = () => {
   const [actionLoading, setActionLoading] = useState(false)
   const [showWithdrawModal, setShowWithdrawModal] = useState(false)
   const [withdrawLoading, setWithdrawLoading] = useState(false)
+  const [showWithdrawRequestModal, setShowWithdrawRequestModal] = useState(false)
+  const [withdrawReason, setWithdrawReason] = useState("")
+  const [withdrawRequestLoading, setWithdrawRequestLoading] = useState(false)
+  const [admins, setAdmins] = useState([])
+  const [adminsLoading, setAdminsLoading] = useState(false)
+
 
   const navigate = useNavigate()
 
 
   useEffect(() => {
     fetchCaseDetails()
+    fetchAdmins()
   }, [id])
 
   useEffect(() => {
@@ -92,6 +93,27 @@ const CaseDetail = () => {
       toast.error("Failed to load case details")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAdmins = async () => {
+    try {
+
+      setAdminsLoading(true)
+
+      const res = await api.get("/users/admins")
+
+      setAdmins(res.data.data)
+
+    } catch (err) {
+
+      console.error(err)
+      toast.error("Failed to load admins")
+
+    } finally {
+
+      setAdminsLoading(false)
+
     }
   }
 
@@ -192,6 +214,55 @@ const CaseDetail = () => {
     }
   }
 
+  const handleRejectWithdraw = async () => {
+    try {
+
+      setWithdrawLoading(true)
+
+      await api.post(`/cases/${id}/withdraw/reject`)
+
+      toast.success("Withdrawal request rejected")
+
+      fetchCaseDetails()
+
+    } catch (err) {
+
+      toast.error(err.response?.data?.message || "Failed to reject withdrawal")
+
+    } finally {
+
+      setWithdrawLoading(false)
+
+    }
+  }
+
+  const handleWithdrawRequest = async () => {
+    try {
+
+      if (!withdrawReason.trim()) {
+        toast.error("Please provide a reason")
+        return
+      }
+
+      setWithdrawRequestLoading(true)
+
+      await api.post(`/cases/${id}/withdraw`, {
+        reason: withdrawReason
+      })
+
+      toast.success("Withdraw request sent")
+
+      setShowWithdrawRequestModal(false)
+      setWithdrawReason("")
+
+      fetchCaseDetails()
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to request withdrawal")
+    } finally {
+      setWithdrawRequestLoading(false)
+    }
+  }
 
   if (loading) return <div className="py-20 text-center">Loading...</div>
   if (!caseData) return <div className="py-20 text-center">Case not found</div>
@@ -223,7 +294,9 @@ const CaseDetail = () => {
 
 
       {/* ================= CASE INFO ================= */}
+
       <div className="bg-gray-50 rounded-xl shadow-sm p-8 space-y-6">
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
 
           <div>
@@ -240,7 +313,9 @@ const CaseDetail = () => {
 
           <div>
             <p className="text-gray-500">Last Seen</p>
-            <p className="font-medium mt-1">{caseData.last_seen_location || "N/A"}</p>
+            <p className="font-medium mt-1">
+              {caseData.last_seen_location || "N/A"}
+            </p>
           </div>
 
           <div>
@@ -254,9 +329,62 @@ const CaseDetail = () => {
 
         <div>
           <p className="text-gray-500 text-sm mb-2">Description</p>
-          <p className="text-sm">{caseData.description || "No description provided"}</p>
+          <p className="text-sm">
+            {caseData.description || "No description provided"}
+          </p>
         </div>
+
+        {caseData.status === "WITHDRAW_REQUESTED" && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-5 space-y-2">
+
+            <p className="text-sm font-semibold text-orange-700">
+              Withdrawal Request
+            </p>
+
+            <p className="text-sm text-orange-700">
+              {caseData.withdraw_reason || "No reason provided"}
+            </p>
+
+            {caseData.withdraw_requested_at && (
+              <p className="text-xs text-orange-600">
+                Requested on{" "}
+                {new Date(caseData.withdraw_requested_at).toLocaleString()}
+              </p>
+            )}
+
+          </div>
+        )}
+
       </div>
+
+      {/* ================= USER ACTIONS ================= */}
+      {user?.role === "USER" &&
+        !["CLOSED", "WITHDRAW_REQUESTED", "WITHDRAWN"].includes(caseData.status) && (
+        <div className="bg-orange-50 rounded-xl shadow-sm p-6">
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+            <div>
+              <h3 className="text-sm font-semibold text-orange-700">
+                Withdraw Case
+              </h3>
+
+              <p className="text-xs text-orange-600 mt-1">
+                You can request withdrawal if the case is no longer needed.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowWithdrawRequestModal(true)}
+              className="px-5 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition cursor-pointer"
+            >
+              Request Withdrawal
+            </button>
+
+          </div>
+
+        </div>
+      )}
 
       {/* ================= ADMIN ACTIONS ================= */}
       {user?.role === "ADMIN" && caseData.status !== "CLOSED" && (
@@ -312,7 +440,6 @@ const CaseDetail = () => {
             </div>
           )}
 
-          {/* APPROVED → ASSIGN ADMIN */}
           {caseData.status === "APPROVED" && (
             <div className="flex flex-wrap items-center gap-4">
 
@@ -321,18 +448,22 @@ const CaseDetail = () => {
                 onChange={(e) => setSelectedAdmin(e.target.value)}
                 className="border px-3 py-2 rounded-lg text-sm"
               >
-                <option value="">Select Admin</option>
-                {dummyAdmins.map(admin => (
+                <option value="">
+                  {adminsLoading ? "Loading admins..." : "Select Admin"}
+                </option>
+
+                {admins.map(admin => (
                   <option key={admin.id} value={admin.id}>
-                    {admin.name}
+                    {admin.full_name}
                   </option>
                 ))}
+
               </select>
 
               <button
                 onClick={handleAssign}
-                disabled={actionLoading}
-                className="px-5 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition cursor-pointer" 
+                disabled={actionLoading || !selectedAdmin}
+                className="px-5 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
               >
                 Assign Admin
               </button>
@@ -349,18 +480,22 @@ const CaseDetail = () => {
                 onChange={(e) => setSelectedAdmin(e.target.value)}
                 className="border px-3 py-2 rounded-lg text-sm"
               >
-                <option value="">Reassign Admin</option>
-                {dummyAdmins.map(admin => (
+                <option value="">
+                  {adminsLoading ? "Loading admins..." : "Reassign Admin"}
+                </option>
+
+                {admins.map(admin => (
                   <option key={admin.id} value={admin.id}>
-                    {admin.name}
+                    {admin.full_name}
                   </option>
                 ))}
+
               </select>
 
               <button
                 onClick={handleAssign}
-                disabled={actionLoading}
-                className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition  cursor-pointer"
+                disabled={actionLoading || !selectedAdmin}
+                className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
               >
                 Reassign
               </button>
@@ -381,12 +516,24 @@ const CaseDetail = () => {
                 </p>
               </div>
 
-              <button
-                onClick={() => setShowWithdrawModal(true)}
-                className="px-5 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition cursor-pointer"
-              >
-                Confirm Withdrawal
-              </button>
+              <div className="flex gap-3">
+
+                <button
+                  onClick={handleRejectWithdraw}
+                  disabled={withdrawLoading}
+                  className="px-5 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
+                >
+                  Reject Request
+                </button>
+
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  className="px-5 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
+                >
+                  Confirm Withdrawal
+                </button>
+
+              </div>
 
             </div>
           )}
@@ -639,6 +786,55 @@ const CaseDetail = () => {
         </div>
       )}
       
+      {/* ================= WITHDRAW RERQUEST MODAL ================= */}
+      {showWithdrawRequestModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+
+          <div className="bg-white rounded-xl w-full max-w-md p-6 space-y-6 shadow-lg">
+
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold">
+                Request Case Withdrawal
+              </h2>
+
+              <p className="text-sm text-gray-600">
+                Provide a reason for withdrawing this case.
+              </p>
+            </div>
+
+            <textarea
+              value={withdrawReason}
+              onChange={(e) => setWithdrawReason(e.target.value)}
+              rows={4}
+              className="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Enter reason..."
+            />
+
+            <div className="flex justify-end gap-3">
+
+              <button
+                onClick={() => setShowWithdrawRequestModal(false)}
+                disabled={withdrawRequestLoading}
+                className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleWithdrawRequest}
+                disabled={withdrawRequestLoading}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition disabled:opacity-50"
+              >
+                {withdrawRequestLoading ? "Sending..." : "Send Request"}
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
 
       {/* ================= WITHDRAW CONFIRM MODAL ================= */}
       {showWithdrawModal && (

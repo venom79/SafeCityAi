@@ -1,9 +1,16 @@
-import prisma from "../db/prisma.js"
+import { CASE_STATUS } from "../constants/caseStatus.js";
+import prisma from "../db/prisma.js";
 
 export const getDashboard = async (req, res) => {
   try {
 
-    const userId = req.user.id
+    const userId = req.user.id;
+
+    // Base filter to exclude draft cases
+    const caseFilter = {
+      created_by: userId,
+      status: { not: CASE_STATUS.DRAFT }
+    };
 
     const [
       totalCases,
@@ -15,19 +22,19 @@ export const getDashboard = async (req, res) => {
     ] = await Promise.all([
 
       prisma.cases.count({
-        where: { created_by: userId }
+        where: caseFilter
       }),
 
       prisma.cases.count({
         where: {
-          created_by: userId,
+          ...caseFilter,
           is_active: true
         }
       }),
 
       prisma.cases.count({
         where: {
-          created_by: userId,
+          ...caseFilter,
           is_active: false
         }
       }),
@@ -35,14 +42,12 @@ export const getDashboard = async (req, res) => {
       prisma.alerts.count({
         where: {
           status: "RESOLVED",
-          cases: {
-            created_by: userId
-          }
+          cases: caseFilter
         }
       }),
 
       prisma.cases.findMany({
-        where: { created_by: userId },
+        where: caseFilter,
         orderBy: { created_at: "desc" },
         take: 5,
         select: {
@@ -56,9 +61,7 @@ export const getDashboard = async (req, res) => {
       prisma.alerts.findMany({
         where: {
           status: "RESOLVED",
-          cases: {
-            created_by: userId
-          }
+          cases: caseFilter
         },
         orderBy: { created_at: "desc" },
         take: 5,
@@ -72,9 +75,11 @@ export const getDashboard = async (req, res) => {
         }
       })
 
-    ])
+    ]);
 
-    res.json({
+    console
+
+    return res.status(200).json({
       stats: {
         total_cases: totalCases,
         active_cases: activeCases,
@@ -83,10 +88,13 @@ export const getDashboard = async (req, res) => {
       },
       recent_cases: recentCases,
       recent_alerts: recentAlerts
-    })
+    });
 
   } catch (err) {
-    console.error("Dashboard error:", err)
-    res.status(500).json({ message: "Failed to load dashboard" })
+    console.error("Dashboard error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load dashboard"
+    });
   }
-}
+};

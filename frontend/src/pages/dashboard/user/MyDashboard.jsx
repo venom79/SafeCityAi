@@ -14,9 +14,8 @@ const MyDashboard = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-
         const res = await api.get("/dashboard")
-
+        
         setStats(res.data.stats)
         setRecentCases(res.data.recent_cases)
         setRecentAlerts(res.data.recent_alerts)
