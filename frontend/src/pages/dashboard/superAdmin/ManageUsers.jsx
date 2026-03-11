@@ -1,72 +1,68 @@
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Ban, CheckCircle, Search } from "lucide-react"
-
-const dummyUsers = [
-  {
-    id: "1",
-    name: "Rahul Sharma",
-    email: "rahul@gmail.com",
-    role: "USER",
-    status: "ACTIVE",
-  },
-  {
-    id: "2",
-    name: "Amit Verma",
-    email: "amit@gmail.com",
-    role: "USER",
-    status: "BANNED",
-  },
-  {
-    id: "3",
-    name: "Inspector Rao",
-    email: "rao@police.gov",
-    role: "ADMIN",
-    status: "ACTIVE",
-  },
-  {
-    id: "4",
-    name: "Inspector Singh",
-    email: "singh@police.gov",
-    role: "ADMIN",
-    status: "BANNED",
-  },
-]
+import api from "@/lib/axios"
 
 const ManageUsers = () => {
-  const [users, setUsers] = useState(dummyUsers)
+
+  const [users, setUsers] = useState([])
   const [activeTab, setActiveTab] = useState("USER")
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("ALL")
+  const [loading, setLoading] = useState(true)
 
-  const toggleBan = (id) => {
-    setUsers(prev =>
-      prev.map(user =>
-        user.id === id
-          ? {
-              ...user,
-              status: user.status === "ACTIVE" ? "BANNED" : "ACTIVE",
-            }
-          : user
-      )
-    )
+  const fetchUsers = async () => {
+
+    try {
+
+      setLoading(true)
+
+      const res = await api.get("/users", {
+        params: {
+          role: activeTab,
+          status: statusFilter === "ALL" ? undefined : statusFilter,
+          search: search || undefined
+        }
+      })
+
+      setUsers(res.data.data)
+
+    } catch (err) {
+
+      console.error("Failed to fetch users", err)
+
+    } finally {
+
+      setLoading(false)
+
+    }
+
   }
 
-  const filteredUsers = useMemo(() => {
-    return users
-      .filter(user => user.role === activeTab)
-      .filter(user => {
-        if (statusFilter === "ALL") return true
-        return user.status === statusFilter
-      })
-      .filter(user => {
-        const q = search.toLowerCase()
-        return (
-          user.id.toLowerCase().includes(q) ||
-          user.name.toLowerCase().includes(q) ||
-          user.email.toLowerCase().includes(q)
+  useEffect(() => {
+    fetchUsers()
+  }, [activeTab, statusFilter, search])
+
+  const toggleBan = async (id) => {
+
+    try {
+
+      const res = await api.patch(`/users/${id}/toggle-ban`)
+
+      setUsers(prev =>
+        prev.map(user =>
+          user.id === id
+            ? { ...user, status: res.data.status }
+            : user
         )
-      })
-  }, [users, activeTab, search, statusFilter])
+      )
+
+    } catch (err) {
+
+      console.error("Failed to update user status", err)
+
+    }
+
+  }
 
   return (
     <div className="w-full space-y-10">
@@ -106,7 +102,7 @@ const ManageUsers = () => {
           <Search size={16} className="absolute left-3 top-3 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by ID, name, or email..."
+            placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-sm"
@@ -129,13 +125,19 @@ const ManageUsers = () => {
       {/* USER LIST */}
       <div className="space-y-6">
 
-        {filteredUsers.length === 0 && (
+        {loading && (
+          <div className="text-gray-500 text-sm py-20 text-center">
+            Loading users...
+          </div>
+        )}
+
+        {!loading && users.length === 0 && (
           <div className="text-gray-500 text-sm py-20 text-center">
             No records found.
           </div>
         )}
 
-        {filteredUsers.map(user => (
+        {users.map(user => (
           <div
             key={user.id}
             className="bg-gray-50 rounded-xl shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-6"
@@ -146,9 +148,11 @@ const ManageUsers = () => {
               <h2 className="text-lg font-medium">
                 {user.name}
               </h2>
+
               <p className="text-sm text-gray-500">
                 {user.email}
               </p>
+
               <p className="text-xs text-gray-400">
                 ID: {user.id}
               </p>
@@ -183,7 +187,6 @@ const ManageUsers = () => {
                   <>
                     <CheckCircle size={16} />
                     Unban
-                    
                   </>
                 )}
               </button>

@@ -14,6 +14,7 @@ backend/snapshots
 
 # frontend
 frontend/node_modules
+frontend/.env
 
 # mediamtx
 mediamtx/LICENSE
