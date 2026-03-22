@@ -788,7 +788,8 @@ pathDefaults:
 # for example "~^prefix" will match all paths that start with "prefix".
 paths:
   cam1:
-    source: rtsp://admin:admin@123@192.168.0.208:554/cam/realmonitor?channel=1&subtype=0
+    # source: rtsp://admin:admin@123@192.168.3.39:554/cam/realmonitor?channel=1&subtype=0 #college
+    source: rtsp://admin:admin@123@192.168.3.39:554/cam/realmonitor?channel=1&subtype=0 
     sourceOnDemand: yes
   # example:
   # my_camera:
