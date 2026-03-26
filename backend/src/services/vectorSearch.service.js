@@ -47,12 +47,12 @@ export const processRecognitions = async (cameraId, frameId, detections) => {
 
     const similarity = 1 - bestMatch.distance
 
-    if (similarity < 0.65) {
+    if (similarity < 0.60) {
       console.log("Low similarity:", similarity.toFixed(3))
       continue
     }
 
-    let detectionStatus = similarity >= 0.80 ? "CONFIRMED" : "POSSIBLE"
+    let detectionStatus = similarity >= 0.70 ? "CONFIRMED" : "POSSIBLE"
 
     // ------------------------
     // CCTV LOG COOLDOWN
@@ -169,7 +169,7 @@ export const processRecognitions = async (cameraId, frameId, detections) => {
     // ALERT COOLDOWN
     // ------------------------
 
-    if (similarity > 0.80) {
+    if (similarity > 0.70) {
 
       const recentAlert = await prisma.alerts.findFirst({
         where: {
