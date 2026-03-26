@@ -4,6 +4,9 @@ import app from "./app.js";
 import { initWebSocket } from "./websocket/server.js"
 import { startAllCameras } from "./services/cameraStartup.service.js"
 
+// telegram bot import
+import "./services/telegramBot.js" 
+
 const PORT = process.env.PORT || 8080;
 
 const server = http.createServer(app);

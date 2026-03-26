@@ -96,7 +96,10 @@ export const login = async (req, res) => {
         user: {
           id: user.id,
           email: user.email,
-          role: user.role
+          role: user.role,
+          telegram_chat_id: user.telegram_chat_id
+            ? user.telegram_chat_id.toString()
+            : null
         }
       }
     });

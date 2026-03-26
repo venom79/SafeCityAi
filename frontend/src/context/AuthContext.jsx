@@ -11,6 +11,8 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       const refreshToken = localStorage.getItem("refreshToken")
       const role = localStorage.getItem("role")
+      const userId = localStorage.getItem("userId")
+      const telegram_chat_id = localStorage.getItem("telegram_chat_id")
 
       if (!refreshToken) {
         setLoading(false)
@@ -26,8 +28,12 @@ export const AuthProvider = ({ children }) => {
 
         localStorage.setItem("token", newAccessToken)
 
-        if (role) {
-          setUser({ role })
+        if (role && userId) {
+          setUser({
+            id: userId,
+            role,
+            telegram_chat_id,
+          })
         }
 
       } catch (err) {
@@ -44,7 +50,10 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, accessToken, refreshToken) => {
     localStorage.setItem("token", accessToken)
     localStorage.setItem("refreshToken", refreshToken)
+
     localStorage.setItem("role", userData.role)
+    localStorage.setItem("userId", userData.id)
+    localStorage.setItem("telegram_chat_id", userData.telegram_chat_id)
 
     setUser(userData)
   }
