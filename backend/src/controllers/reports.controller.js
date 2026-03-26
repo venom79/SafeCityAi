@@ -255,3 +255,125 @@ export const generateReport = async (req, res) => {
 
   }
 }
+
+
+function buildReport(alert) {
+
+  const person = alert.case_person
+  const camera = alert.cctv_cameras
+  const log = alert.cctv_logs
+  const caseData = alert.cases
+  const assignedOfficer = caseData?.users_cases_assigned_adminTousers
+
+  return {
+
+    report_id: alert.id,
+
+    alert_information: {
+      alert_type: alert.alert_type,
+      status: alert.status,
+      confidence: alert.confidence,
+      message: alert.message,
+      created_at: alert.created_at,
+      acknowledged_at: alert.acknowledged_at,
+      resolved_at: alert.resolved_at
+    },
+
+    case_information: caseData && {
+      case_number: caseData.case_number,
+      title: caseData.title,
+      description: caseData.description,
+      case_type: caseData.case_type,
+      last_seen_location: caseData.last_seen_location,
+      last_seen_time: caseData.last_seen_time,
+
+      assigned_officer: {
+        name: assignedOfficer?.full_name,
+        email: assignedOfficer?.email
+      }
+    },
+
+    detected_person: person && {
+      name: person.full_name,
+      alias: person.alias,
+      gender: person.gender,
+      age: person.age,
+      height_cm: person.height_cm,
+      weight_kg: person.weight_kg,
+      skin_tone: person.skin_tone,
+      eye_color: person.eye_color,
+      hair_color: person.hair_color,
+      clothing: person.last_known_clothing,
+      marks: person.distinguishing_marks,
+      description: person.description
+    },
+
+    detection_details: log && {
+      detection_status: log.detection_status,
+      confidence: log.confidence,
+      detected_at: log.detected_at,
+      ai_model: log.model_name,
+      model_version: log.model_version,
+      snapshot: log.snapshot_path
+    },
+
+    camera_information: camera && {
+      camera_code: camera.camera_code,
+      camera_name: camera.camera_name,
+      location: camera.location_description,
+      latitude: camera.latitude,
+      longitude: camera.longitude
+    },
+
+    officers: {
+      acknowledged_by: alert.users_alerts_acknowledged_byTousers?.full_name,
+      resolved_by: alert.users_alerts_resolved_byTousers?.full_name
+    }
+  } 
+}
+
+export const generateAlertReport = async (req, res) => {
+  try {
+
+    const { alertId } = req.params
+
+    const alert = await prisma.alerts.findUnique({
+      where: { id: alertId },
+      include: {
+        cases: {
+          include: {
+            users_cases_assigned_adminTousers: true
+          }
+        },
+        case_person: {
+          include: {
+            case_person_photos: true
+          }
+        },
+        cctv_cameras: true,
+        cctv_logs: true,
+        users_alerts_resolved_byTousers: true,
+        users_alerts_acknowledged_byTousers: true
+      }
+    })
+
+    if (!alert) {
+      return res.status(404).json({ message: "Alert not found" })
+    }
+
+    if (alert.status !== "RESOLVED") {
+      return res.status(400).json({
+        message: "Report can only be generated for RESOLVED alerts"
+      })
+    }
+
+    res.json({
+      success: true,
+      report: buildReport(alert)
+    })
+
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: "Failed to generate report" })
+  }
+}

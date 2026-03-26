@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { CheckCircle, AlertTriangle, XCircle } from "lucide-react"
 import api from "@/lib/axios"
+import { DownloadAlertReport } from "./downloadAlertReport"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -114,6 +115,10 @@ const Alerts = () => {
         Loading alerts...
       </div>
     )
+  }
+
+  const downloadReportHandler = async (id) => {
+    await DownloadAlertReport(id,api);
   }
 
   return (
@@ -355,6 +360,15 @@ const Alerts = () => {
                           Dismiss
                         </button>
                       </>
+                    )}
+
+                    {alertDetails.status === "RESOLVED" && (
+                        <button
+                          onClick={()=>downloadReportHandler(alertDetails.id)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer"
+                        >
+                          Download Report
+                        </button>
                     )}
 
                   </div>
