@@ -949,3 +949,36 @@ export const rejectWithdrawRequest = async (req, res) => {
 
   }
 };
+
+export const getComplainantByCase = async (req, res) => {
+  try {
+
+    const caseId = req.case.id
+
+    const complainant = await prisma.complainants.findUnique({
+      where: {
+        case_id: caseId
+      }
+    })
+
+    if (!complainant) {
+      return res.status(404).json({
+        message: "Complainant not found"
+      })
+    }
+
+    res.json({
+      success: true,
+      data: complainant
+    })
+
+  } catch (err) {
+
+    console.error(err)
+
+    res.status(500).json({
+      message: "Failed to fetch complainant"
+    })
+
+  }
+}

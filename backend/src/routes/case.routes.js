@@ -9,6 +9,7 @@ import {
   deleteCasePerson,
   getCaseById,
   getCasePersons,
+  getComplainantByCase,
   getFullCase,
   getMyDraftCases,
   getWithdrawRequests,
@@ -150,6 +151,12 @@ router.delete("/:id/person/:personId",
   deleteCasePerson
 );
 
+router.get(
+  "/:id/complainant",
+  authMiddleware,
+  requireCaseAccess,
+  getComplainantByCase
+)
 
 /* =========================
    FULL CASE DATA
