@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
+import { useAuth } from "@/context/AuthContext"
 import { CheckCircle, AlertTriangle, XCircle } from "lucide-react"
 import api from "@/lib/axios"
 
 const API_URL = import.meta.env.VITE_API_URL
+
 
 const statusStyles = {
   OPEN: "bg-red-100 text-red-700",
@@ -12,6 +14,11 @@ const statusStyles = {
 }
 
 const Alerts = () => {
+
+
+  const { user } = useAuth();
+  const TELEGRAM_CONNECT = `https://t.me/SafeCityAiBot?start=${user.id}`
+  const TELEGRAM_CHAT = "https://t.me/SafeCityAiBot"
 
   const [alerts, setAlerts] = useState([])
   const [filter, setFilter] = useState("ALL")
@@ -112,6 +119,47 @@ const Alerts = () => {
   return (
     <div className="w-full space-y-8">
 
+      {/* TELEGRAM CONNECT CARD */}
+      <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+
+        <div className="space-y-1">
+
+          <h3 className="text-sm font-semibold text-blue-900">
+            Get Instant Telegram Alerts
+          </h3>
+
+          <p className="text-sm text-blue-800">
+            Connect your Telegram to receive real-time CCTV detection alerts with
+            snapshot evidence and location directly on your phone.
+          </p>
+
+        </div>
+
+        {user?.telegram_chat_id ? (
+
+          <a
+            href={TELEGRAM_CHAT}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-green-600 text-white text-sm px-5 py-2 rounded-lg hover:bg-green-700 transition cursor-pointer"
+          >
+            Open Telegram
+          </a>
+
+        ) : (
+
+          <button
+            onClick={() => window.open(TELEGRAM_CONNECT, "_blank")}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
+          >
+            Connect Telegram
+          </button>
+
+        )}
+
+      </div>
+
+
       {/* HEADER */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <h1 className="text-2xl font-semibold">
@@ -134,6 +182,7 @@ const Alerts = () => {
           ))}
         </div>
       </div>
+    
 
       {/* ALERT LIST */}
       <div className="space-y-6">

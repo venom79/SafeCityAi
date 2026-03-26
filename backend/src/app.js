@@ -9,6 +9,7 @@ import dashboardRoutes from "./routes/dashboard.routes.js"
 import cameraRoutes from "./routes/camera.routes.js"
 import alertRoutes from "./routes/alerts.routes.js";
 import userManagementRoutes from "./routes/userManagement.routes.js"
+import reportsRoutes from "./routes/reports.routes.js"
 import testRoutes from "./routes/test.routes.js";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -50,4 +51,5 @@ app.use("/dashboard", dashboardRoutes)
 app.use("/cameras", cameraRoutes)
 app.use("/alerts", alertRoutes);
 app.use("/users", userManagementRoutes)
+app.use("/reports", reportsRoutes)
 export default app;
