@@ -90,7 +90,19 @@ const SuperAdminDashboard = () => {
               </>
             )}
           </NavLink>
-
+          
+          {/* 5️⃣ Surveillance - Camera Management */}
+          <NavLink to="cameras" className={tabStyle}>
+            {({ isActive }) => (
+              <>
+                Manage Cameras
+                {isActive && (
+                  <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-white" />
+                )}
+              </>
+            )}
+          </NavLink>
+          
           {/* 6️⃣ AI Tooling */}
           <NavLink to="sketch-scan" className={tabStyle}>
             {({ isActive }) => (

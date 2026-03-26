@@ -36,6 +36,7 @@ import Alerts from "./pages/dashboard/admin/Alerts"
 // Super Admin pages
 import ManageUsers from "./pages/dashboard/superAdmin/ManageUsers"
 import WithdrawRequests from "./pages/dashboard/superAdmin/WithdrawRequests"
+import CameraManagements from "./pages/dashboard/superAdmin/CameraManagement"
 
 // report 
 import Reports from "./pages/dashboard/reports/Reports"
@@ -106,6 +107,7 @@ function App() {
             <Route path="withdraw-requests" element={<WithdrawRequests />} />
             <Route path="alerts" element={<Alerts />} />
             <Route path="cctv" element={<CCTV />} />
+            <Route path="cameras" element={<CameraManagements />} />
             <Route path="sketch-scan" element={<SketchScan />} />
             <Route path="reports" element={<Reports />} />
           </Route>
