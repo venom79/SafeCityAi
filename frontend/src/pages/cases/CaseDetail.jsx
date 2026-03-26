@@ -46,6 +46,7 @@ const CaseDetail = () => {
   const [withdrawRequestLoading, setWithdrawRequestLoading] = useState(false)
   const [admins, setAdmins] = useState([])
   const [adminsLoading, setAdminsLoading] = useState(false)
+  const [complainant, setComplainant] = useState(null)
 
 
   const navigate = useNavigate()
@@ -68,13 +69,15 @@ const CaseDetail = () => {
     try {
       setLoading(true)
 
-      const [caseRes, personsRes] = await Promise.all([
+      const [caseRes, personsRes, complainantRes] = await Promise.all([
         api.get(`/cases/${id}`),
-        api.get(`/cases/${id}/person`)
+        api.get(`/cases/${id}/person`),
+        api.get(`/cases/${id}/complainant`)
       ])
 
       setCaseData(caseRes.data.data)
       setPersons(personsRes.data.data)
+      setComplainant(complainantRes.data.data)
 
       const photoRequests = personsRes.data.data.map(person =>
         api.get(`/case-persons/${person.id}/photos`)
@@ -359,6 +362,64 @@ const CaseDetail = () => {
 
       </div>
 
+      {/* ================= COMPLAINANT DETAILS ================= */}
+
+      {complainant && (
+
+        <div className="bg-gray-50 rounded-xl shadow-sm p-8 space-y-6">
+
+          <h2 className="text-lg font-semibold">
+            Complainant Details
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm">
+
+            <div>
+              <p className="text-gray-500">Full Name</p>
+              <p className="font-medium">{complainant.full_name}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Phone</p>
+              <p className="font-medium">{complainant.phone}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Email</p>
+              <p className="font-medium">{complainant.email || "N/A"}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Gender</p>
+              <p className="font-medium">{complainant.gender}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Age</p>
+              <p className="font-medium">{complainant.age}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Relation</p>
+              <p className="font-medium">{complainant.relation}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500">Aadhaar</p>
+              <p className="font-medium">{complainant.aadhaar}</p>
+            </div>
+
+          </div>
+
+          <div>
+            <p className="text-gray-500 text-sm">Address</p>
+            <p className="text-sm mt-1">{complainant.address}</p>
+          </div>
+
+        </div>
+
+      )}        
+      
       {/* ================= USER ACTIONS ================= */}
       {user?.role === "USER" &&
         !["CLOSED", "WITHDRAW_REQUESTED", "WITHDRAWN"].includes(caseData.status) && (
