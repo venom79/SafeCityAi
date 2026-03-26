@@ -1,57 +1,175 @@
 import { Router } from "express";
-import { acceptCase,
-    addCasePerson,
-    assignCase,
-    closeCase,
-    confirmWithdrawCase,
-    createDraftCase,
-    getCaseById, 
-    getCasePersons,
-    registerCase,
-    rejectCase,
-    requestWithdrawCase,
-    saveComplainant,
-    submitCase,
-    updateCaseDetails,
-    viewAllCase
+import {
+  acceptCase,
+  addCasePerson,
+  assignCase,
+  closeCase,
+  confirmWithdrawCase,
+  createDraftCase,
+  deleteCasePerson,
+  getCaseById,
+  getCasePersons,
+  getFullCase,
+  getMyDraftCases,
+  getWithdrawRequests,
+  registerCase,
+  rejectCase,
+  rejectWithdrawRequest,
+  requestWithdrawCase,
+  saveComplainant,
+  submitCase,
+  updateCaseDetails,
+  viewAllCase
 } from "../controllers/case.controller.js";
+
 import authMiddleware from "../middlewares/auth.middleware.js";
 import requireCaseAccess from "../middlewares/caseAccess.middleware.js";
 import requireRole from "../middlewares/role.middleware.js";
-import { ROLES } from "../constants/roles.js";
 import requireDraft from "../middlewares/requireDraft.js";
+
+import { ROLES } from "../constants/roles.js";
+
 const router = Router();
 
-//requires authorization header
+/* =========================
+   CASE CREATION & DRAFTS
+========================= */
+
 router.post("/draft", authMiddleware, createDraftCase);
-router.patch("/:id/details", authMiddleware,requireCaseAccess, requireDraft, updateCaseDetails);
-
-//complanant details
-router.patch("/:id/complainant", authMiddleware, requireCaseAccess, requireDraft, saveComplainant);
-
-router.post("/", authMiddleware, registerCase) 
-router.get("/", authMiddleware, viewAllCase);
-router.get("/:id", authMiddleware, requireCaseAccess, getCaseById);
-router.post("/:id/accept",authMiddleware,requireRole(ROLES.SUPER_ADMIN),requireCaseAccess,acceptCase);
-router.post("/:id/reject",authMiddleware,requireRole(ROLES.SUPER_ADMIN),requireCaseAccess,rejectCase);
-router.post("/:id/assign",authMiddleware,requireRole(ROLES.SUPER_ADMIN),requireCaseAccess,assignCase);
-
-//user actions
-router.post("/:id/withdraw",authMiddleware,requireRole(ROLES.USER),requireCaseAccess,requestWithdrawCase);
-
-//admin actions
-router.post("/:id/withdraw/confirm",authMiddleware,requireRole(ROLES.USER),requireCaseAccess,confirmWithdrawCase);
-router.post("/:id/close",authMiddleware,requireRole(ROLES.ADMIN,ROLES.SUPER_ADMIN),requireCaseAccess,closeCase);
-
-
-//case person details
-router.post("/:id/person",authMiddleware,requireCaseAccess,requireDraft,addCasePerson);
-router.get("/:id/person",authMiddleware,requireCaseAccess,getCasePersons);
-
-
-
-//submit draft
+router.get("/drafts/my", authMiddleware, getMyDraftCases);
+router.post("/", authMiddleware, registerCase);
 router.post("/:id/submit", authMiddleware, requireCaseAccess, requireDraft, submitCase);
 
-export default router;
 
+/* =========================
+   CASE DETAILS
+========================= */
+
+router.get("/", authMiddleware, viewAllCase);
+router.get("/withdraw-requests", authMiddleware, requireRole(ROLES.SUPER_ADMIN), getWithdrawRequests);
+
+
+/* =========================
+   CASE WORKFLOW (ADMIN)
+========================= */
+
+router.post("/:id/accept",
+  authMiddleware,
+  requireRole(ROLES.SUPER_ADMIN),
+  requireCaseAccess,
+  acceptCase
+);
+
+router.post("/:id/reject",
+  authMiddleware,
+  requireRole(ROLES.SUPER_ADMIN),
+  requireCaseAccess,
+  rejectCase
+);
+
+router.post("/:id/assign",
+  authMiddleware,
+  requireRole(ROLES.SUPER_ADMIN),
+  requireCaseAccess,
+  assignCase
+);
+
+router.post("/:id/close",
+  authMiddleware,
+  requireRole(ROLES.ADMIN, ROLES.SUPER_ADMIN),
+  requireCaseAccess,
+  closeCase
+);
+
+
+/* =========================
+   WITHDRAW WORKFLOW
+========================= */
+
+router.post("/:id/withdraw",
+  authMiddleware,
+  requireRole(ROLES.USER),
+  requireCaseAccess,
+  requestWithdrawCase
+);
+
+router.post("/:id/withdraw/confirm",
+  authMiddleware,
+  requireRole(ROLES.SUPER_ADMIN),
+  requireCaseAccess,
+  confirmWithdrawCase
+);
+
+router.post("/:id/withdraw/reject",
+  authMiddleware,
+  requireRole(ROLES.SUPER_ADMIN),
+  rejectWithdrawRequest
+);
+
+
+/* =========================
+   CASE EDITING
+========================= */
+
+router.patch("/:id/details",
+  authMiddleware,
+  requireCaseAccess,
+  requireDraft,
+  updateCaseDetails
+);
+
+router.patch("/:id/complainant",
+  authMiddleware,
+  requireCaseAccess,
+  requireDraft,
+  saveComplainant
+);
+
+
+/* =========================
+   CASE PERSON
+========================= */
+
+router.post("/:id/person",
+  authMiddleware,
+  requireCaseAccess,
+  requireDraft,
+  addCasePerson
+);
+
+router.get("/:id/person",
+  authMiddleware,
+  requireCaseAccess,
+  getCasePersons
+);
+
+router.delete("/:id/person/:personId",
+  authMiddleware,
+  requireCaseAccess,
+  requireDraft,
+  deleteCasePerson
+);
+
+
+/* =========================
+   FULL CASE DATA
+========================= */
+
+router.get("/:id/full",
+  authMiddleware,
+  requireCaseAccess,
+  getFullCase
+);
+
+
+/* =========================
+   SINGLE CASE (KEEP LAST)
+========================= */
+
+router.get("/:id",
+  authMiddleware,
+  requireCaseAccess,
+  getCaseById
+);
+
+export default router;

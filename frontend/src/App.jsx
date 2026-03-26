@@ -37,7 +37,8 @@ import Alerts from "./pages/dashboard/admin/Alerts"
 import ManageUsers from "./pages/dashboard/superAdmin/ManageUsers"
 import WithdrawRequests from "./pages/dashboard/superAdmin/WithdrawRequests"
 
-
+// report 
+import Reports from "./pages/dashboard/reports/Reports"
 
 function App() {
   return (
@@ -57,9 +58,9 @@ function App() {
           <Route
             path="/dashboard/user"
             element={
-              // <ProtectedRoute allowedRoles={["USER"]}>
+              <ProtectedRoute allowedRoles={["USER"]}>
                 <UserDashboard />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           >
             <Route index element={<MyDashboard />} />
@@ -74,9 +75,9 @@ function App() {
           <Route
             path="/dashboard/admin"
             element={
-              // <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
                 <AdminDashboard />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           >
             <Route index element={<Navigate to="assigned-cases" replace />} />
@@ -86,15 +87,16 @@ function App() {
             <Route path="cctv" element={<CCTV />} />
             <Route path="sketch-scan" element={<SketchScan />} />
             <Route path="alerts" element={<Alerts />} />
+            <Route path="reports" element={<Reports />} />
           </Route>
 
           {/* ================= SUPER ADMIN ================= */}
           <Route
             path="/dashboard/superadmin"
             element={
-              // <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+              <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
                 <SuperAdminDashboard />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           >
             <Route index element={<Navigate to="cases" replace />} />
@@ -105,6 +107,7 @@ function App() {
             <Route path="alerts" element={<Alerts />} />
             <Route path="cctv" element={<CCTV />} />
             <Route path="sketch-scan" element={<SketchScan />} />
+            <Route path="reports" element={<Reports />} />
           </Route>
 
         </Route>

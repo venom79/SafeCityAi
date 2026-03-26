@@ -1,5 +1,7 @@
 import prisma from "../db/prisma.js";
 import { saveSnapshot } from "../helpers/snapshot.js"
+import { broadcastLog } from "../websocket/server.js"
+import bot from "../services/telegramBot.js"
 
 export const searchFaceEmbedding = async (embedding, limit = 5) => {
   const vectorLiteral = `[${embedding.join(",")}]`;
@@ -110,6 +112,58 @@ export const processRecognitions = async (cameraId, frameId, detections) => {
     })
 
     console.log("CCTV log stored")
+    
+    const person = await prisma.case_person.findUnique({
+      where: { id: bestMatch.case_person_id },
+      select: {
+        full_name: true,
+        alias: true,
+        category: true,
+        cases: {
+          select: {
+            case_number: true,
+            assigned_admin: true
+          }
+        }
+      }
+    })
+
+    const camera = await prisma.cctv_cameras.findUnique({
+      where: { id: cameraId },
+      select: { camera_code: true }
+    })
+
+    const admin = await prisma.users.findUnique({
+      where: { id: person?.cases?.assigned_admin },
+      select: {
+        telegram_chat_id: true,
+        full_name: true
+      }
+    })
+
+    // ------------------------
+    // BROADCAST TO DASHBOARD
+    // ------------------------
+
+    broadcastLog({
+      id: log.id,
+      camera_id: cameraId,
+      camera_code: camera.camera_code,
+
+      detection_status: detectionStatus,
+      confidence: similarity,
+
+      person_id: bestMatch.case_person_id,
+      person_name: person?.full_name || "Unknown",
+      alias: person?.alias || null,
+      category: person?.category || null,
+      case_number: person?.cases?.case_number,
+
+      bbox: bbox,
+      snapshot_path: snapshotPath,
+
+      detected_at: log.detected_at
+    })
 
     // ------------------------
     // ALERT COOLDOWN
@@ -148,6 +202,49 @@ export const processRecognitions = async (cameraId, frameId, detections) => {
           message: "High confidence CCTV match detected"
         }
       })
+
+      
+      if (admin?.telegram_chat_id) {
+
+        const mapLink = `https://maps.google.com/?q=${camera.latitude},${camera.longitude}`
+
+        const message = `
+          🚨 SafeCity AI Alert
+
+          Person: ${person?.full_name || person?.alias || "Unknown"}
+          Case: ${person?.cases?.case_number}
+
+          Camera: ${camera.camera_code}
+
+          Confidence: ${(similarity * 100).toFixed(1)}%
+
+          Location:
+          ${mapLink}
+          `
+
+        try {
+
+          if (snapshotPath) {
+
+            await bot.sendPhoto(
+              admin.telegram_chat_id,
+              `${process.env.SERVER_URL}/${snapshotPath}`,
+              { caption: message }
+            )
+
+          } else {
+
+            await bot.sendMessage(admin.telegram_chat_id, message)
+
+          }
+
+        } catch (err) {
+
+          console.error("Telegram alert failed:", err)
+
+        }
+
+      }
 
       console.log("🚨 ALERT CREATED")
     }

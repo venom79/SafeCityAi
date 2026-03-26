@@ -1,44 +1,10 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@/context/AuthContext"
 import { CheckCircle, AlertTriangle, XCircle } from "lucide-react"
+import api from "@/lib/axios"
 
-const dummyAlerts = [
-  {
-    id: "1",
-    alert_type: "FACE_MATCH",
-    status: "OPEN",
-    confidence: 0.94,
-    person_name: "Rahul Sharma",
-    is_primary: true,
-    case_number: "WANT-82917321",
-    camera: "CAM-002",
-    location: "Railway Platform 2",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    alert_type: "FACE_MATCH",
-    status: "ACKNOWLEDGED",
-    confidence: 0.81,
-    person_name: "Ravi",
-    is_primary: false,
-    case_number: "WANT-82917321",
-    camera: "CAM-001",
-    location: "Bus Stand Entrance",
-    created_at: new Date(Date.now() - 600000).toISOString(),
-  },
-  {
-    id: "3",
-    alert_type: "FACE_MATCH",
-    status: "RESOLVED",
-    confidence: 0.88,
-    person_name: "Unknown Person",
-    is_primary: false,
-    case_number: "MISS-55198231",
-    camera: "CAM-004",
-    location: "Market Square",
-    created_at: new Date(Date.now() - 1800000).toISOString(),
-  },
-]
+const API_URL = import.meta.env.VITE_API_URL
+
 
 const statusStyles = {
   OPEN: "bg-red-100 text-red-700",
@@ -48,31 +14,93 @@ const statusStyles = {
 }
 
 const Alerts = () => {
-  const [alerts, setAlerts] = useState(dummyAlerts)
+
+
+  const { user } = useAuth();
+  const TELEGRAM_CONNECT = `https://t.me/SafeCityAiBot?start=${user.id}`
+  const TELEGRAM_CHAT = "https://t.me/SafeCityAiBot"
+
+  const [alerts, setAlerts] = useState([])
   const [filter, setFilter] = useState("ALL")
+  const [loading, setLoading] = useState(true)
 
-  const handleAcknowledge = (id) => {
-    setAlerts(prev =>
-      prev.map(a =>
-        a.id === id ? { ...a, status: "ACKNOWLEDGED" } : a
-      )
-    )
+  const [selectedAlert, setSelectedAlert] = useState(null)
+  const [alertDetails, setAlertDetails] = useState(null)
+  const [detailsLoading, setDetailsLoading] = useState(false)
+
+  const fetchAlerts = async () => {
+    try {
+
+      const res = await api.get("/alerts")
+      setAlerts(res.data.data)
+
+    } catch (err) {
+
+      console.error("Failed to fetch alerts", err)
+
+    } finally {
+
+      setLoading(false)
+
+    }
   }
 
-  const handleResolve = (id) => {
-    setAlerts(prev =>
-      prev.map(a =>
-        a.id === id ? { ...a, status: "RESOLVED" } : a
-      )
-    )
+  useEffect(() => {
+    fetchAlerts()
+  }, [])
+
+  const fetchAlertDetails = async (id) => {
+
+    try {
+
+      setDetailsLoading(true)
+
+      const res = await api.get(`/alerts/${id}`)
+
+      setAlertDetails(res.data.data)
+
+    } catch (err) {
+
+      console.error("Failed to fetch alert details", err)
+
+    } finally {
+
+      setDetailsLoading(false)
+
+    }
   }
 
-  const handleDismiss = (id) => {
-    setAlerts(prev =>
-      prev.map(a =>
-        a.id === id ? { ...a, status: "DISMISSED" } : a
+  const openAlert = (alert) => {
+    setSelectedAlert(alert)
+    fetchAlertDetails(alert.id)
+  }
+
+  const closeModal = () => {
+    setSelectedAlert(null)
+    setAlertDetails(null)
+  }
+
+  const updateStatus = async (id, status) => {
+
+    try {
+
+      await api.patch(`/alerts/${id}/status`, { status })
+
+      setAlerts(prev =>
+        prev.map(a =>
+          a.id === id ? { ...a, status } : a
+        )
       )
-    )
+
+      if (alertDetails) {
+        setAlertDetails(prev => ({ ...prev, status }))
+      }
+
+    } catch (err) {
+
+      console.error("Failed to update alert", err)
+
+    }
   }
 
   const filteredAlerts =
@@ -80,8 +108,57 @@ const Alerts = () => {
       ? alerts
       : alerts.filter(a => a.status === filter)
 
+  if (loading) {
+    return (
+      <div className="py-20 text-center text-gray-500">
+        Loading alerts...
+      </div>
+    )
+  }
+
   return (
     <div className="w-full space-y-8">
+
+      {/* TELEGRAM CONNECT CARD */}
+      <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+
+        <div className="space-y-1">
+
+          <h3 className="text-sm font-semibold text-blue-900">
+            Get Instant Telegram Alerts
+          </h3>
+
+          <p className="text-sm text-blue-800">
+            Connect your Telegram to receive real-time CCTV detection alerts with
+            snapshot evidence and location directly on your phone.
+          </p>
+
+        </div>
+
+        {user?.telegram_chat_id ? (
+
+          <a
+            href={TELEGRAM_CHAT}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-green-600 text-white text-sm px-5 py-2 rounded-lg hover:bg-green-700 transition cursor-pointer"
+          >
+            Open Telegram
+          </a>
+
+        ) : (
+
+          <button
+            onClick={() => window.open(TELEGRAM_CONNECT, "_blank")}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
+          >
+            Connect Telegram
+          </button>
+
+        )}
+
+      </div>
+
 
       {/* HEADER */}
       <div className="flex justify-between items-center flex-wrap gap-4">
@@ -105,6 +182,7 @@ const Alerts = () => {
           ))}
         </div>
       </div>
+    
 
       {/* ALERT LIST */}
       <div className="space-y-6">
@@ -116,16 +194,18 @@ const Alerts = () => {
         )}
 
         {filteredAlerts.map((alert) => (
+
           <div
             key={alert.id}
-            className="bg-gray-50 rounded-xl shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-6"
+            onClick={() => openAlert(alert)}
+            className="bg-gray-50 cursor-pointer rounded-xl shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-gray-100 transition"
           >
-            {/* LEFT SECTION */}
+
             <div className="space-y-3 flex-1">
 
               <div>
                 <h2 className="text-lg font-semibold">
-                  {alert.person_name}
+                  {alert.person_name || "Unknown"}
                   {alert.is_primary && (
                     <span className="ml-2 text-xs bg-black text-white px-2 py-1 rounded">
                       Primary
@@ -139,7 +219,7 @@ const Alerts = () => {
               </div>
 
               <div className="text-sm text-gray-700">
-                Detected at <span className="font-medium">{alert.camera}</span> • {alert.location}
+                {alert.location || "Unknown location"}
               </div>
 
               <div className="text-xs text-gray-500">
@@ -149,66 +229,146 @@ const Alerts = () => {
 
             </div>
 
-            {/* RIGHT SECTION */}
-            <div className="flex flex-col items-end gap-4">
+            <span
+              className={`text-xs px-3 py-1 rounded-full font-medium ${
+                statusStyles[alert.status]
+              }`}
+            >
+              {alert.status}
+            </span>
 
-              <span
-                className={`text-xs px-3 py-1 rounded-full font-medium ${
-                  statusStyles[alert.status]
-                }`}
-              >
-                {alert.status}
-              </span>
-
-              <div className="flex gap-3 flex-wrap">
-
-                {alert.status === "OPEN" && (
-                  <>
-                    <button
-                      onClick={() => handleAcknowledge(alert.id)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
-                    >
-                      <AlertTriangle size={16} />
-                      Acknowledge
-                    </button>
-
-                    <button
-                      onClick={() => handleDismiss(alert.id)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
-                    >
-                      <XCircle size={16} />
-                      Dismiss
-                    </button>
-                  </>
-                )}
-
-                {alert.status === "ACKNOWLEDGED" && (
-                  <>
-                    <button
-                      onClick={() => handleResolve(alert.id)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                    >
-                      <CheckCircle size={16} />
-                      Resolve
-                    </button>
-
-                    <button
-                      onClick={() => handleDismiss(alert.id)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
-                    >
-                      <XCircle size={16} />
-                      Dismiss
-                    </button>
-                  </>
-                )}
-
-              </div>
-
-            </div>
           </div>
+
         ))}
 
       </div>
+
+      {/* MODAL */}
+      {selectedAlert && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+          <div className="bg-white rounded-xl w-full max-w-xl p-6 space-y-5">
+
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">
+                Alert Details
+              </h2>
+
+              <button
+                onClick={closeModal}
+                className="text-gray-500 hover:text-black"
+              >
+                Close
+              </button>
+            </div>
+
+            {detailsLoading ? (
+              <div className="text-center text-gray-500">
+                Loading details...
+              </div>
+            ) : (
+
+              alertDetails && (
+
+                <div className="space-y-4">
+
+                  <div>
+                    <strong>Person:</strong>{" "}
+                    {alertDetails.case_person?.full_name || "Unknown"}
+                  </div>
+
+                  <div>
+                    <strong>Case:</strong>{" "}
+                    {alertDetails.cases?.case_number}
+                  </div>
+
+                  <div>
+                    <strong>Location:</strong>{" "}
+                    {alertDetails.cctv_cameras?.location_description}
+                  </div>
+
+                  <div>
+                    <strong>Detected at:</strong>{" "}
+                    {new Date(alertDetails.created_at).toLocaleString()}
+                  </div>
+
+                  <div>
+                    <strong>Confidence:</strong>{" "}
+                    {(alertDetails.confidence * 100).toFixed(0)}%
+                  </div>
+
+                  <div>
+                    <strong>Message:</strong>{" "}
+                    {alertDetails.message}
+                  </div>
+
+                  {/* SNAPSHOT */}
+                  {alertDetails.cctv_logs?.snapshot_path && (
+                    <div className="flex justify-center">
+                      <img
+                        src={`${API_URL}${alertDetails.cctv_logs.snapshot_path}`}
+                        alt="Detection Snapshot"
+                        className="max-h-64 w-auto rounded-lg border object-contain"
+                      />
+                    </div>
+                  )}
+
+                  {/* STATUS ACTIONS */}
+
+                  <div className="flex gap-3 pt-2">
+
+                    {alertDetails.status === "OPEN" && (
+                      <>
+                        <button
+                          onClick={() => updateStatus(alertDetails.id, "ACKNOWLEDGED")}
+                          className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg"
+                        >
+                          <AlertTriangle size={16} />
+                          Acknowledge
+                        </button>
+
+                        <button
+                          onClick={() => updateStatus(alertDetails.id, "DISMISSED")}
+                          className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg"
+                        >
+                          <XCircle size={16} />
+                          Dismiss
+                        </button>
+                      </>
+                    )}
+
+                    {alertDetails.status === "ACKNOWLEDGED" && (
+                      <>
+                        <button
+                          onClick={() => updateStatus(alertDetails.id, "RESOLVED")}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg"
+                        >
+                          <CheckCircle size={16} />
+                          Resolve
+                        </button>
+
+                        <button
+                          onClick={() => updateStatus(alertDetails.id, "DISMISSED")}
+                          className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg"
+                        >
+                          <XCircle size={16} />
+                          Dismiss
+                        </button>
+                      </>
+                    )}
+
+                  </div>
+
+                </div>
+
+              )
+
+            )}
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   )

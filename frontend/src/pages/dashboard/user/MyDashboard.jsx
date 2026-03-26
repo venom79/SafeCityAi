@@ -1,50 +1,47 @@
 import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FilePlus, Bell, FolderOpen, ArrowRight } from "lucide-react"
+import api from "@/lib/axios"
 
 const MyDashboard = () => {
   const navigate = useNavigate()
 
-  // Dummy Data (Replace later with API)
-  const [stats] = useState({
-    totalCases: 4,
-    activeCases: 2,
-    closedCases: 1,
-    alerts: 3,
-  })
+  const [stats, setStats] = useState(null)
+  const [recentCases, setRecentCases] = useState([])
+  const [recentAlerts, setRecentAlerts] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const recentCases = [
-    {
-      id: "1",
-      title: "Missing Person – Central Market",
-      status: "UNDER_REVIEW",
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      title: "Lost Child – Bus Stand",
-      status: "APPROVED",
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ]
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await api.get("/dashboard")
+        
+        setStats(res.data.stats)
+        setRecentCases(res.data.recent_cases)
+        setRecentAlerts(res.data.recent_alerts)
 
-  const recentAlerts = [
-    {
-      id: "1",
-      message: "Possible match detected at Railway Station",
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      message: "Case status updated to UNDER REVIEW",
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-    },
-  ]
+      } catch (err) {
+        console.error("Dashboard error:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboard()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="p-10 text-gray-500">
+        Loading dashboard...
+      </div>
+    )
+  }
 
   return (
     <div className="w-full space-y-10">
 
-      {/* ================= HERO ================= */}
+      {/* HERO */}
       <div className="bg-white rounded-xl shadow-sm p-8 border-l-4 border-black flex flex-col md:flex-row md:items-center md:justify-between gap-6">
 
         <div>
@@ -68,38 +65,44 @@ const MyDashboard = () => {
 
       </div>
 
-      {/* ================= STATS ================= */}
+      {/* STATS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
         <div className="bg-white rounded-xl shadow-sm p-6">
           <p className="text-gray-500 text-sm">Total Cases</p>
-          <p className="text-3xl font-semibold mt-2">{stats.totalCases}</p>
+          <p className="text-3xl font-semibold mt-2">
+            {stats?.total_cases ?? 0}
+          </p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6">
           <p className="text-gray-500 text-sm">Active Cases</p>
-          <p className="text-3xl font-semibold mt-2">{stats.activeCases}</p>
+          <p className="text-3xl font-semibold mt-2">
+            {stats?.active_cases ?? 0}
+          </p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6">
           <p className="text-gray-500 text-sm">Closed Cases</p>
-          <p className="text-3xl font-semibold mt-2">{stats.closedCases}</p>
+          <p className="text-3xl font-semibold mt-2">
+            {stats?.closed_cases ?? 0}
+          </p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6">
           <p className="text-gray-500 text-sm">Alerts</p>
-          <p className="text-3xl font-semibold mt-2">{stats.alerts}</p>
+          <p className="text-3xl font-semibold mt-2">
+            {stats?.alerts ?? 0}
+          </p>
         </div>
 
       </div>
 
-      {/* ================= RECENT CASES ================= */}
+      {/* RECENT CASES */}
       <div className="bg-white rounded-xl shadow-sm p-6 space-y-5">
 
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">
-            Recent Cases
-          </h2>
+          <h2 className="text-lg font-semibold">Recent Cases</h2>
 
           <button
             onClick={() => navigate("my-cases")}
@@ -123,6 +126,7 @@ const MyDashboard = () => {
           >
             <div className="flex justify-between items-center">
               <h3 className="font-medium">{item.title}</h3>
+
               <span className="text-xs text-gray-500">
                 {new Date(item.created_at).toLocaleDateString()}
               </span>
@@ -136,7 +140,7 @@ const MyDashboard = () => {
 
       </div>
 
-      {/* ================= RECENT ALERTS ================= */}
+      {/* RECENT ALERTS */}
       <div className="bg-white rounded-xl shadow-sm p-6 space-y-5">
 
         <div className="flex justify-between items-center">
@@ -160,10 +164,8 @@ const MyDashboard = () => {
         )}
 
         {recentAlerts.map(alert => (
-          <div
-            key={alert.id}
-            className="p-4 bg-gray-50 rounded-lg"
-          >
+          <div key={alert.id} className="p-4 bg-gray-50 rounded-lg">
+
             <p className="text-sm text-gray-700">
               {alert.message}
             </p>
@@ -171,12 +173,13 @@ const MyDashboard = () => {
             <p className="text-xs text-gray-500 mt-1">
               {new Date(alert.created_at).toLocaleString()}
             </p>
+
           </div>
         ))}
 
       </div>
 
-      {/* ================= QUICK ACTIONS ================= */}
+      {/* QUICK ACTIONS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <div
@@ -184,14 +187,17 @@ const MyDashboard = () => {
           className="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition"
         >
           <FolderOpen size={28} />
+
           <div>
             <h3 className="font-semibold">
               Manage My Cases
             </h3>
+
             <p className="text-sm text-gray-500">
               View progress and track investigation updates.
             </p>
           </div>
+
         </div>
 
         <div
@@ -199,14 +205,17 @@ const MyDashboard = () => {
           className="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition"
         >
           <Bell size={28} />
+
           <div>
             <h3 className="font-semibold">
               View Alerts
             </h3>
+
             <p className="text-sm text-gray-500">
               Check matches and system notifications.
             </p>
           </div>
+
         </div>
 
       </div>

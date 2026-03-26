@@ -55,7 +55,7 @@ const AdminDashboard = () => {
           <NavLink to="sketch-scan" className={tabStyle}>
             {({ isActive }) => (
               <>
-                Sketch Scan
+                Scan Face
                 {isActive && (
                   <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-white" />
                 )}
@@ -67,6 +67,18 @@ const AdminDashboard = () => {
             {({ isActive }) => (
               <>
                 Alerts
+                {isActive && (
+                  <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-white" />
+                )}
+              </>
+            )}
+          </NavLink>
+
+          {/* ===== NEW REPORT TAB ===== */}
+          <NavLink to="reports" className={tabStyle}>
+            {({ isActive }) => (
+              <>
+                Reports
                 {isActive && (
                   <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-white" />
                 )}

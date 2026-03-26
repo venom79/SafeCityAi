@@ -1,7 +1,7 @@
 import { processRecognitions } from "../services/vectorSearch.service.js"
 
 export const handleRecognition = async (req, res) => {
-
+  
   try {
 
     const { camera_id, frame_id, detections } = req.body
