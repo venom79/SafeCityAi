@@ -95,9 +95,11 @@ const CaseDetail = () => {
       setLoading(false)
     }
   }
-
+  
   const fetchAdmins = async () => {
     try {
+
+      if(user.role != "SUPER_ADMIN") return;
 
       setAdminsLoading(true)
 

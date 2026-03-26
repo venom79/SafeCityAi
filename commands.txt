@@ -2,3 +2,8 @@ RUN : python -m uvicorn modelService.app:app --reload --port 8001
 DB_BUILD : python -m modelService.scripts.db_builder.py
 ENTER_DB : docker exec -it safecity-postgres psql -U safecity safecity_db
 RESTORE_DB : Get-Content safecity_db_backup.sql | docker exec -i safecity-postgres psql -U safecity -d safecity_db
+
+
+START_MODEL_SERVICE : venv/Scripts/activate & uvicorn app:app --host 0.0.0.0 --port 8001 --reload
+START_BACKEND_AND_FRONTEND : npm run dev
+START_MEDIAMTX : .\mediamtx.exe
