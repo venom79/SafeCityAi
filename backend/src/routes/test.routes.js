@@ -1,7 +1,7 @@
 import { Router } from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import requireRole from "../middlewares/role.middleware.js";
-import bot from "../services/telegramBot.js"
+// import bot from "../services/telegramBot.js"
 import { ROLES } from "../constants/roles.js";
 
 const router = Router();

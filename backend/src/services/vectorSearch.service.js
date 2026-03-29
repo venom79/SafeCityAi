@@ -1,7 +1,7 @@
 import prisma from "../db/prisma.js";
 import { saveSnapshot } from "../helpers/snapshot.js"
 import { broadcastLog } from "../websocket/server.js"
-import bot from "../services/telegramBot.js"
+// import bot from "../services/telegramBot.js"
 
 export const searchFaceEmbedding = async (embedding, limit = 5) => {
   const vectorLiteral = `[${embedding.join(",")}]`;
@@ -204,47 +204,48 @@ export const processRecognitions = async (cameraId, frameId, detections) => {
       })
 
       
-      if (admin?.telegram_chat_id) {
+      // if (admin?.telegram_chat_id) {
 
-        const mapLink = `https://maps.google.com/?q=${camera.latitude},${camera.longitude}`
+      //   const mapLink = `https://maps.google.com/?q=${camera.latitude},${camera.longitude}`
 
-        const message = `
-          🚨 SafeCity AI Alert
+      //   const message = `
+      //     🚨 SafeCity AI Alert
 
-          Person: ${person?.full_name || person?.alias || "Unknown"}
-          Case: ${person?.cases?.case_number}
+      //     Person: ${person?.full_name || person?.alias || "Unknown"}
+      //     Case: ${person?.cases?.case_number}
 
-          Camera: ${camera.camera_code}
+      //     Camera: ${camera.camera_code}
 
-          Confidence: ${(similarity * 100).toFixed(1)}%
+      //     Confidence: ${(similarity * 100).toFixed(1)}%
 
-          Location:
-          ${mapLink}
-          `
+      //     Location:
+      //     ${mapLink}
+      //     `
 
-        try {
+      //   try {
 
-          if (snapshotPath) {
+      //     if (snapshotPath) {
 
-            await bot.sendPhoto(
-              admin.telegram_chat_id,
-              `${process.env.SERVER_URL}/${snapshotPath}`,
-              { caption: message }
-            )
+      //       await bot.sendPhoto(
+      //         admin.telegram_chat_id,
+      //         `${process.env.SERVER_URL}/${snapshotPath}`,
+      //         { caption: message }
+      //       )
 
-          } else {
+      //     } else {
 
-            await bot.sendMessage(admin.telegram_chat_id, message)
+      //       await bot.sendMessage(admin.telegram_chat_id, message)
 
-          }
+      //     }
 
-        } catch (err) {
+      //   } catch (err) {
 
-          console.error("Telegram alert failed:", err)
+      //     console.error("Telegram alert failed:", err)
 
-        }
+      //   }
 
-      }
+      // }
+      // }
 
       console.log("🚨 ALERT CREATED")
     }
