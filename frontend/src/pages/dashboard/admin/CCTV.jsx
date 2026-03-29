@@ -90,12 +90,12 @@ const CCTV = () => {
         setLogs(prev => [
           ...prev.slice(-50),
           {
-            id: crypto.randomUUID(),
+            id: data.payload.id,
             camera: data.payload.camera_code || data.payload.camera_id,
             person: data.payload.person_name,
             case_number: data.payload.case_number,
             status: data.payload.detection_status,
-            confidence: data.payload.confidence?.toFixed(2),
+            confidence: Number(data.payload.confidence).toFixed(2),
             time: new Date(
               data.payload.detected_at || Date.now()
             ).toLocaleTimeString()

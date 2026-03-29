@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Menu, X, User } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
+import logo from "@/assets/SafeCitylogo.svg"
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -29,8 +30,15 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto h-20 px-6 flex items-center justify-between">
 
           {/* LEFT - Logo */}
-          <Link to="/" className="text-2xl font-bold tracking-wide">
-            SafeCity
+          <Link to="/" className="flex items-center space-x-2">
+            <img
+              src={logo}  // put your logo in public folder
+              alt="SafeCity Logo"
+              className="h-15 w-15 object-contain"
+            />
+            <span className="text-2xl font-bold tracking-wide">
+              SafeCityAI
+            </span>
           </Link>
 
           {/* RIGHT - Desktop Navigation */}
