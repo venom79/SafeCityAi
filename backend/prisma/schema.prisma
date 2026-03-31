@@ -210,6 +210,8 @@ model users {
   created_at                                               DateTime?            @default(now()) @db.Timestamptz(6)
   updated_at                                               DateTime?            @default(now()) @db.Timestamptz(6)
   telegram_chat_id                                         BigInt?
+  reset_token                                              String?
+  reset_token_expiry                                       DateTime?            @db.Timestamptz(6)
   alerts_alerts_acknowledged_byTousers                     alerts[]             @relation("alerts_acknowledged_byTousers")
   alerts_alerts_resolved_byTousers                         alerts[]             @relation("alerts_resolved_byTousers")
   case_person_photos_case_person_photos_approved_byTousers case_person_photos[] @relation("case_person_photos_approved_byTousers")
