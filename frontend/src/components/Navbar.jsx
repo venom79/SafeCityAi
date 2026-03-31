@@ -84,7 +84,7 @@ const Navbar = () => {
                   Logout
                 </button>
 
-                <User className="cursor-pointer hover:text-gray-300" />
+                {/* <User className="cursor-pointer hover:text-gray-300" /> */}
               </>
             )}
           </div>
@@ -156,10 +156,10 @@ const Navbar = () => {
                   Logout
                 </button>
 
-                <div className="flex items-center space-x-3 mt-6">
+                {/* <div className="flex items-center space-x-3 mt-6">
                   <User size={18} />
                   <span>{user.role}</span>
-                </div>
+                </div> */}
               </>
             )}
           </div>

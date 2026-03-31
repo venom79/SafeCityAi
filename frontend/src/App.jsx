@@ -41,6 +41,10 @@ import CameraManagements from "./pages/dashboard/superAdmin/CameraManagement"
 // report 
 import Reports from "./pages/dashboard/reports/Reports"
 
+//forget password
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
+
 function App() {
   return (
     <>
@@ -54,6 +58,8 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* ================= USER DASHBOARD ================= */}
           <Route
