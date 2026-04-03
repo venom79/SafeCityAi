@@ -1,12 +1,14 @@
 import prisma from "../db/prisma.js";
 import { PHOTO_SOURCE } from "../constants/photoSource.js";
 import { ROLES } from "../constants/roles.js";
+import { generateFileHash } from "../helpers/hashFile.js";
 
 import { generatePhotoEmbedding } from "../services/faceEmbedding.service.js";
 
 
 export const uploadPersonPhoto = async (req, res) => {
   try {
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -24,6 +26,7 @@ export const uploadPersonPhoto = async (req, res) => {
     });
 
     if (!person) {
+      fs.unlinkSync(req.file.path); // cleanup
       return res.status(404).json({
         success: false,
         message: "Person not found",
@@ -35,16 +38,33 @@ export const uploadPersonPhoto = async (req, res) => {
       person.category === "WANTED" &&
       ![ROLES.ADMIN, ROLES.SUPER_ADMIN].includes(req.user.role)
     ) {
+      fs.unlinkSync(req.file.path); // cleanup
       return res.status(403).json({
         success: false,
         message: "Only admins can upload photos for wanted persons",
       });
     }
 
+    // 3️⃣ Generate file hash
+    const fileHash = await generateFileHash(req.file.path);
+
+    // 4️⃣ Duplicate check
+    const existingPhoto = await prisma.case_person_photos.findUnique({
+      where: { file_hash: fileHash },
+    });
+
+    if (existingPhoto) {
+      fs.unlinkSync(req.file.path); // 🧹 remove duplicate file
+      return res.status(409).json({
+        success: false,
+        message: "Duplicate image already uploaded",
+      });
+    }
+
     const finalIsPrimaryRequested =
       is_primary === true || is_primary === "true";
 
-    // 3️⃣ Create photo safely (transaction)
+    // 5️⃣ Transaction (safe insert)
     const photo = await prisma.$transaction(async (tx) => {
       const existingPrimary = await tx.case_person_photos.findFirst({
         where: {
@@ -72,13 +92,14 @@ export const uploadPersonPhoto = async (req, res) => {
               ? PHOTO_SOURCE.ADMIN_UPLOAD
               : PHOTO_SOURCE.USER_UPLOAD,
           file_path: req.file.path,
+          file_hash: fileHash, // ✅ IMPORTANT
           is_primary: finalIsPrimary,
           image_type: "PHOTO",
         },
       });
     });
 
-    // 4️⃣ Generate embedding (OUTSIDE transaction)
+    // 6️⃣ Generate embedding (outside transaction)
     try {
       const result = await generatePhotoEmbedding(req.file.path);
 
@@ -101,8 +122,6 @@ export const uploadPersonPhoto = async (req, res) => {
         )
       `;
 
-
-
       await prisma.case_person_photos.update({
         where: { id: photo.id },
         data: {
@@ -113,7 +132,6 @@ export const uploadPersonPhoto = async (req, res) => {
     } catch (mlError) {
       console.warn("Embedding generation failed:", mlError.message);
 
-      // Face not detected OR model error
       await prisma.case_person_photos.update({
         where: { id: photo.id },
         data: {
@@ -131,14 +149,30 @@ export const uploadPersonPhoto = async (req, res) => {
       },
     });
   } catch (err) {
+    // ⚠️ Handle primary conflict
     if (err.message === "PRIMARY_EXISTS") {
+      fs.existsSync(req.file?.path) && fs.unlinkSync(req.file.path);
+
       return res.status(409).json({
         success: false,
         message: "Primary photo already exists for this person",
       });
     }
 
+    // ⚠️ Handle UNIQUE constraint (race condition)
+    if (err.code === "P2002" && err.meta?.target?.includes("file_hash")) {
+      fs.existsSync(req.file?.path) && fs.unlinkSync(req.file.path);
+
+      return res.status(409).json({
+        success: false,
+        message: "Duplicate image already uploaded",
+      });
+    }
+
     console.error(err);
+
+    fs.existsSync(req.file?.path) && fs.unlinkSync(req.file.path);
+
     return res.status(500).json({
       success: false,
       message: "Internal server error",

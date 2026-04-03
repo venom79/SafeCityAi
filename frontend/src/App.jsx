@@ -22,6 +22,7 @@ import RegisterCase from "./pages/registerCase/RegisterCase"
 import MyDashboard from "./pages/dashboard/user/MyDashboard"
 import MyAlerts from "./pages/dashboard/user/MyAlerts"
 import DraftCases from "./pages/dashboard/user/DraftCases"
+import MissingPersons from "./pages/dashboard/user/MissingPersons"
 
 // Case Pages
 import CaseList from "./pages/cases/CaseList"
@@ -76,6 +77,7 @@ function App() {
             <Route path="draft-cases" element={<DraftCases />} />
             <Route path="cases/:id" element={<CaseDetail />} />
             <Route path="alerts" element={<MyAlerts />} />
+            <Route path="missing-persons" element={<MissingPersons />} />
           </Route>
 
           {/* ================= ADMIN DASHBOARD ================= */}
@@ -90,6 +92,7 @@ function App() {
             <Route index element={<Navigate to="assigned-cases" replace />} />
             <Route path="assigned-cases" element={<AssignedCases />} />
             <Route path="register-case" element={<RegisterCase />} />
+            <Route path="draft-cases" element={<DraftCases />} />
             <Route path="cases/:id" element={<CaseDetail />} />
             <Route path="cctv" element={<CCTV />} />
             <Route path="sketch-scan" element={<SketchScan />} />

@@ -59,6 +59,17 @@ const UserDashboard = () => {
             )}
           </NavLink>
 
+          <NavLink to="missing-persons" className={tabStyle}>
+            {({ isActive }) => (
+              <>
+                Missing / Wanted
+                {isActive && (
+                  <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-white" />
+                )}
+              </>
+            )}
+          </NavLink>
+
         </div>
       </div>
 

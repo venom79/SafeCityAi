@@ -6,6 +6,7 @@ import {
   deletePersonPhoto,
 } from "../controllers/casePersonPhoto.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
+import { getActivePersonsWithPrimaryPhoto } from "../controllers/casePerson.controller.js";
 
 const router = Router();
 
@@ -27,4 +28,11 @@ router.delete(
   authMiddleware,
   deletePersonPhoto
 );
+
+router.get(
+  "/active-persons",
+  authMiddleware,
+  getActivePersonsWithPrimaryPhoto
+);
+
 export default router;

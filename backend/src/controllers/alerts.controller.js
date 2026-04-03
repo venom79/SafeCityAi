@@ -11,10 +11,11 @@ export const getAlerts = async (req, res) => {
     if (role === "USER") {
 
       whereClause = {
+        status: "RESOLVED",
         cases: {
           created_by: userId,
           status: { not: "DRAFT" }
-        }
+        },
       }
 
     } else if (role === "ADMIN") {

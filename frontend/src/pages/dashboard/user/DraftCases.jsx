@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import api from "@/lib/axios"
 import { toast } from "sonner"
+import { useAuth } from "@/context/AuthContext"
 
 const statusColors = {
   DRAFT: "bg-gray-200 text-gray-800",
@@ -14,6 +15,8 @@ const typeColors = {
 
 const DraftCases = () => {
   const navigate = useNavigate()
+
+  const {user} = useAuth();
 
   const [draftCases, setDraftCases] = useState([])
   const [loading, setLoading] = useState(true)
@@ -38,8 +41,14 @@ const DraftCases = () => {
 
   const handleContinue = (id) => {
     localStorage.setItem("draftCaseId", id)
+    if(user.role == 'ADMIN'){
+      navigate(`/dashboard/admin/register-case?draft=${id}`)
 
-    navigate(`/dashboard/user/register-case?draft=${id}`)
+    }
+    if(user.role == 'USER'){
+      navigate(`/dashboard/user/register-case?draft=${id}`)
+    }
+
   }
 
   return (

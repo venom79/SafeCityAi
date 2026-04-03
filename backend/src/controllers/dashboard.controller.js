@@ -28,14 +28,15 @@ export const getDashboard = async (req, res) => {
       prisma.cases.count({
         where: {
           ...caseFilter,
-          is_active: true
+          is_active: true,
+          status: { notIn : [CASE_STATUS.CLOSED,CASE_STATUS.DRAFT,CASE_STATUS.REJECTED,CASE_STATUS.WITHDRAWN] }
         }
       }),
 
       prisma.cases.count({
         where: {
           ...caseFilter,
-          is_active: false
+          status: {in : [CASE_STATUS.CLOSED, CASE_STATUS.WITHDRAWN]}
         }
       }),
 

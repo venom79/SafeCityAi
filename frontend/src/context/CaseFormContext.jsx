@@ -457,7 +457,9 @@ export const CaseFormProvider = ({ children }) => {
 
     try {
 
-      await api.post(`/cases/${caseId}/submit`)
+      await api.post(`/cases/${caseId}/submit`,{
+        assignToSelf : true,
+      })
 
       toast.success("Case submitted successfully")
 

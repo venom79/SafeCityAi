@@ -2,7 +2,7 @@ import { Router } from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import requireRole from "../middlewares/role.middleware.js";
 import { ROLES } from "../constants/roles.js";
-import { faceSearch, saveSketchDecision } from "../controllers/faceSearch.controller.js";
+import { faceSearch, getSketchSearchHistory, saveSketchDecision } from "../controllers/faceSearch.controller.js";
 import uploadMemory from "../middlewares/uploadMemory.middleware.js"
 const router = Router();
 
@@ -27,5 +27,12 @@ router.post(
   requireRole(ROLES.ADMIN, ROLES.SUPER_ADMIN),
   saveSketchDecision
 )
+
+router.get(
+  "/history",
+  authMiddleware,
+  requireRole(ROLES.ADMIN, ROLES.SUPER_ADMIN),
+  getSketchSearchHistory
+);
 
 export default router;

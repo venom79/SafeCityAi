@@ -236,18 +236,28 @@ export const submitCase = async (req, res) => {
         ? `MISS-${suffix}`
         : `WANT-${suffix}`;
 
+    const data = {
+      status: CASE_STATUS.SUBMITTED,
+      case_number,
+    };
+
+    // 🔥 ADD THIS BLOCK
+    if (req.user.role === ROLES.ADMIN && req.body.assignToSelf === true) {
+      data.status = CASE_STATUS.UNDER_REVIEW;
+      data.assigned_admin = req.user.id;
+      data.assigned_at = new Date();
+    }
+
     await prisma.cases.update({
       where: { id: req.case.id },
-      data: {
-        status: CASE_STATUS.SUBMITTED,
-        case_number,
-      },
+      data,
     });
 
     res.status(200).json({
       success: true,
       message: "Case submitted successfully",
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false });
@@ -490,62 +500,100 @@ export const rejectCase = async (req, res) => {
 }
 
 export const assignCase = async (req, res) => {
-    try{
-        const {adminId} = req.body;
+  try {
+    const { adminId } = req.body;
+    const requesterRole = req.user.role;
 
-        if (req.case.assigned_admin) {
-            return res.status(409).json({
-                success: false,
-                message: "Case is already assigned",
-            });
-        }
-
-        if(!adminId){   
-            return res.status(400).json({
-                success: false,
-                message: "Admin id is required"
-            })
-        }
-
-        if(req.case.status != CASE_STATUS.APPROVED || !req.case.is_active){
-            return res.status(409).json({
-                success: false,
-                message: "Case cannot be assigned in its current state"
-            })
-        }
-
-        const admin = await prisma.users.findUnique({where:{id: adminId}});
-        if(!admin || admin.role != ROLES.ADMIN){
-            return res.status(400).json({
-                success: false,
-                message: "assignee is not admin"
-            })
-        }
-
-        await prisma.cases.update({
-            where:{
-                id: req.case.id
-            },
-            data: {
-                status: CASE_STATUS.UNDER_REVIEW,
-                assigned_admin: adminId,
-                assigned_at: new Date()
-            }
-        })
-
-        res.status(200).json({
-            success: true,
-            message: "Case assigned successfuly",
-        })
-
-    }catch(err){
-        console.error(err);
-        return res.status(500).json({
+    // 1️⃣ Validate adminId
+    if (!adminId) {
+      return res.status(400).json({
         success: false,
-        message: "Internal server error",
-        });
+        message: "Admin id is required",
+      });
     }
-}
+
+    // 2️⃣ Validate case state
+    if (
+      (req.case.status !== CASE_STATUS.APPROVED && req.case.status !== CASE_STATUS.UNDER_REVIEW) ||
+      !req.case.is_active
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: "Case cannot be assigned in its current state",
+      });
+    }
+
+    // 3️⃣ Validate admin exists
+    const admin = await prisma.users.findUnique({
+      where: { id: adminId },
+    });
+
+    if (!admin || admin.role !== ROLES.ADMIN) {
+      return res.status(400).json({
+        success: false,
+        message: "Assignee must be a valid admin",
+      });
+    }
+
+    const isAlreadyAssigned = !!req.case.assigned_admin;
+
+    // 🔴 CASE 1: Not assigned → normal assignment
+    if (!isAlreadyAssigned) {
+      await prisma.cases.update({
+        where: { id: req.case.id },
+        data: {
+          status: CASE_STATUS.UNDER_REVIEW,
+          assigned_admin: adminId,
+          assigned_at: new Date(),
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Case assigned successfully",
+      });
+    }
+
+    // 🔴 CASE 2: Already assigned → only SUPER_ADMIN can reassign
+    if (isAlreadyAssigned) {
+      if (requesterRole !== ROLES.SUPER_ADMIN) {
+        return res.status(403).json({
+          success: false,
+          message: "Only super admin can reassign a case",
+        });
+      }
+
+      // ❌ Prevent same admin reassignment
+      if (req.case.assigned_admin === adminId) {
+        return res.status(409).json({
+          success: false,
+          message: "Case is already assigned to this admin",
+        });
+      }
+
+      // ✅ Reassign
+      await prisma.cases.update({
+        where: { id: req.case.id },
+        data: {
+          assigned_admin: adminId,
+          assigned_at: new Date(),
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Case reassigned successfully",
+      });
+    }
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 export const addCasePerson = async (req, res) => {
   try {
