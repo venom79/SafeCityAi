@@ -52,7 +52,7 @@ export const faceSearch = async (req, res) => {
         data: {
           case_person_id: null,
           uploaded_by: req.user.id,
-          source: "SEARCH_UPLOAD",
+          source: "ADMIN_UPLOAD",
           file_path: filePath,
           file_hash: hash,
           image_type: "SKETCH",
@@ -242,3 +242,73 @@ export const saveSketchDecision = async (req, res) => {
 
   }
 }
+
+export const getSketchSearchHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const searches = await prisma.sketch_searches.findMany({
+      where: {
+        performed_by: userId,
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+      include: {
+        case_person: {
+          select: {
+            full_name: true,
+            cases: {
+              select: {
+                case_number: true,
+              },
+            },
+          },
+        },
+        case_person_photos_sketch_searches_sketch_photo_idTocase_person_photos: {
+          select: {
+            file_path: true,
+          },
+        },
+        case_person_photos_sketch_searches_candidate_photo_idTocase_person_photos: {
+          select: {
+            file_path: true,
+          },
+        },
+      },
+    });
+
+    const formatted = searches.map((s) => ({
+      id: s.id,
+
+      sketch_image: s.case_person_photos_sketch_searches_sketch_photo_idTocase_person_photos
+        ? `http://localhost:8080/${s.case_person_photos_sketch_searches_sketch_photo_idTocase_person_photos.file_path}`
+        : null,
+
+      matched_image: s.case_person_photos_sketch_searches_candidate_photo_idTocase_person_photos
+        ? `http://localhost:8080/${s.case_person_photos_sketch_searches_candidate_photo_idTocase_person_photos.file_path}`
+        : null,
+
+      similarity_score: s.similarity_score,
+      decision: s.decision,
+
+      candidate_name: s.case_person?.full_name || "Unknown",
+      case_number: s.case_person?.cases?.case_number || null,
+
+      created_at: s.created_at,
+    }));
+
+    return res.json({
+      success: true,
+      data: formatted,
+    });
+
+  } catch (err) {
+    console.error("Sketch history error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch sketch search history",
+    });
+  }
+};

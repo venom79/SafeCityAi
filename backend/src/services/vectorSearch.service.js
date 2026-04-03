@@ -1,7 +1,7 @@
 import prisma from "../db/prisma.js";
 import { saveSnapshot } from "../helpers/snapshot.js"
 import { broadcastLog } from "../websocket/server.js"
-// import bot from "../services/telegramBot.js"
+import bot from "../services/telegramBot.js"
 
 export const searchFaceEmbedding = async (embedding, limit = 5) => {
   const vectorLiteral = `[${embedding.join(",")}]`;
